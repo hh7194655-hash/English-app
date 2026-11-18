@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#18233b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<title>英语成长 · 部署测试</title>
+<style>
+:root{--ink:#18233b;--sky:#eef2f6;--teal:#1f8a7d;--mute:#5d6b82;--ok:#1f8a7d;--no:#b4533c;color-scheme:light dark}
+@media(prefers-color-scheme:dark){:root{--ink:#eef2f6;--sky:#18233b;--mute:#a7b3c6;--teal:#59c2b4;--ok:#59c2b4;--no:#e59a84}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sky);color:var(--ink);font:16px/1.7 -apple-system,"Noto Sans SC","PingFang SC",sans-serif;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom))}
+main{max-width:480px;margin:0 auto}
+h1{font-size:26px;margin:24px 0 6px;letter-spacing:.5px}
+p.sub{color:var(--mute);margin:0 0 28px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid color-mix(in srgb,var(--ink) 14%,transparent)}
+.row b{font-weight:600}
+.row small{display:block;color:var(--mute);font-size:13px}
+.st{font-weight:600;white-space:nowrap}
+.ok{color:var(--ok)}.no{color:var(--no)}
+button{margin-top:28px;width:100%;padding:15px;border:0;border-radius:12px;background:var(--teal);color:#fff;font-size:16px;font-weight:600}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+#note{color:var(--mute);font-size:14px;margin-top:16px;min-height:24px}
+</style>
+</head>
+<body>
+<main>
+<h1>部署测试页</h1>
+<p class="sub">能看到这一页，说明网站已经上线。下面检查手机上的关键能力。</p>
+<div class="row"><div><b>网页已上线</b><small>你正在访问的就是线上版本</small></div><span class="st ok" id="s-online">正常</span></div>
+<div class="row"><div><b>离线缓存</b><small>断网后仍可打开本页</small></div><span class="st" id="s-sw">检查中</span></div>
+<div class="row"><div><b>本地数据库</b><small>学习记录将保存在这里</small></div><span class="st" id="s-db">检查中</span></div>
+<div class="row"><div><b>持久化存储</b><small>防止系统自动清理数据</small></div><span class="st" id="s-persist">检查中</span></div>
+<div class="row"><div><b>已安装到主屏幕</b><small>从桌面图标打开时显示“是”</small></div><span class="st" id="s-inst">检查中</span></div>
+<button id="btn">写入并读取一条测试记录</button>
+<div id="note"></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const set=(id,ok,t)=>{const e=$(id);e.textContent=t;e.className='st '+(ok?'ok':'no')};
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(()=>set('s-sw',true,'已启用')).catch(()=>set('s-sw',false,'未启用'))}else set('s-sw',false,'不支持');
+const standalone=matchMedia('(display-mode: standalone)').matches;
+set('s-inst',standalone,standalone?'是':'否');
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('english-app-test',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function dbTest(){const db=await openDB();const stamp=new Date().toLocaleString('zh-CN');
+await new Promise((res,rej)=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(stamp,'last');t.oncomplete=res;t.onerror=()=>rej(t.error)});
+return new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get('last');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+async function init(){
+try{const db=await openDB();const v=await new Promise(r=>{const q=db.transaction('kv').objectStore('kv').get('last');q.onsuccess=()=>r(q.result)});set('s-db',true,'可用');if(v)$('note').textContent='上次测试记录：'+v}catch(e){set('s-db',false,'不可用')}
+try{if(navigator.storage&&navigator.storage.persist){const p=await navigator.storage.persisted()||await navigator.storage.persist();set('s-persist',p,p?'已开启':'未获批')}else set('s-persist',false,'不支持')}catch(e){set('s-persist',false,'未获批')}}
+$('btn').onclick=async()=>{try{const v=await dbTest();$('note').textContent='写入并读取成功：'+v+'。关闭后再打开，应能看到这条记录。'}catch(e){$('note').textContent='失败：'+e}};
+init();
+</script>
+</body>
+</html>
