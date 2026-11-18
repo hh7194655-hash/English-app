@@ -18,6 +18,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .c{background:var(--card);border-radius:14px;padding:14px 16px;margin:12px 0;border:1px solid var(--line)}
 .t{display:inline-block;padding:2px 10px;border-radius:12px;background:var(--sky);border:1px solid var(--line);font-size:13px;margin:3px 4px 3px 0}.w{color:var(--no)}.g{color:var(--teal)}
 .wd{border-bottom:1.5px dotted var(--teal)}.nv{display:flex;justify-content:space-between;gap:8px;margin:0 0 12px}.g2{padding:7px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}.g2:disabled{opacity:.4}#sh{position:fixed;left:0;right:0;bottom:0;max-height:55vh;overflow:auto;background:var(--card);border-top:1px solid var(--line);padding:14px 18px max(16px,env(safe-area-inset-bottom));z-index:9;box-shadow:0 -4px 16px rgba(0,0,0,.18)}#sh input{width:auto;flex:1}
+.nb{display:inline-block;width:42px;height:42px;line-height:40px;text-align:center;border-radius:10px;border:1.5px solid var(--line);margin:4px 6px 4px 0;background:var(--card);color:inherit;font:inherit;padding:0}.nb.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}.nb.cur{border:2.5px solid var(--teal)}.p:disabled{opacity:.45}
 </style></head><body><main id="app">加载中…</main>
 <script src="dict.js"></script>
 <script>
@@ -73,11 +74,11 @@ function pick(){const p=P[S.sess.part],d=B[p],u=S.sess.asked.map(a=>a.i);
 for(let k=0;k<5;k++)for(const l of[S.sess.level-k,S.sess.level+k]){if(l<1||l>5)continue;const c=d.map((x,i)=>i).filter(i=>d[i][0]==l&&!u.includes(p+i));if(c.length)return c[Math.floor(Math.random()*c.length)]}return -1}
 const here=()=>S.sess.asked.filter(a=>a.p==P[S.sess.part]);
 function quiz(){const p=P[S.sess.part],n=here().length;CP=p;if(n>=PERS[p])return part_end();const i=pick();if(i<0)return part_end();const x=B[p][i];
-let h=`<div class="nv"><button class="g2" id="pv" ${S.sess.asked.length?'':'disabled'}>‹ 上一题</button>${p=='v'?'':'<button class="g2" id="lk">查词</button>'}</div><p class="m">${NM[p]} · 第 ${n+1} / ${PERS[p]} 题</p><div class="bar"><i style="width:${n/PERS[p]*100}%"></i></div>`;
+let h=`<div class="nv"><button class="g2" id="pv" ${S.sess.asked.length?'':'disabled'}>‹ 上一题</button><button class="g2" id="ct">答题卡</button>${p=='v'?'':'<button class="g2" id="lk">查词</button>'}</div><p class="m">${NM[p]} · 第 ${n+1} / ${PERS[p]} 题</p><div class="bar"><i style="width:${n/PERS[p]*100}%"></i></div>`;
 if(x[1]=='m')h+=`<p class="m">下面这个单词最接近的意思是？</p><div class="q"><b>${esc(x[2])}</b></div>`;else h+=(x[6]?`<div class="c" style="font-size:16px">${W(x[6])}</div>`:'')+`<div class="q">${W(x[2])}</div>`;
 if(x[3]){const o=[...x[3]].sort(()=>Math.random()-.5);h+=o.map(t=>`<button class="o" data-v="${esc(t)}">${esc(t)}</button>`).join('')}else h+=`${x[1]=='w'?'<textarea id="ty" rows="6" placeholder="在这里写英文，不会写就点“不知道”" style="width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:inherit;font:inherit"></textarea>':'<input id="ty" autocomplete="off" autocapitalize="none" placeholder="输入你的答案">'}`+`<button class="p" id="ok">提交</button>`;
 h+=`<button class="s" id="dk">不知道</button><p class="m">进度已自动保存，可以随时退出，下次继续。</p>`;app.innerHTML=h;
-$('#pv').onclick=()=>review(S.sess.asked.length-1,quiz);if($('#lk'))$('#lk').onclick=()=>sheet();const fin=v=>ans(p,i,v);document.querySelectorAll('.o').forEach(b=>b.onclick=()=>fin(b.dataset.v));$('#dk').onclick=()=>fin(null);
+$('#pv').onclick=()=>review(S.sess.asked.length-1,quiz);$('#ct').onclick=()=>cardScreen(quiz);if($('#lk'))$('#lk').onclick=()=>sheet();const fin=v=>ans(p,i,v);document.querySelectorAll('.o').forEach(b=>b.onclick=()=>fin(b.dataset.v));$('#dk').onclick=()=>fin(null);
 if($('#ok'))$('#ok').onclick=()=>{const v=$('#ty').value.trim();v?fin(v):fin(null)}}
 async function ans(p,i,v){const x=B[p][i],idk=v===null;let ok=false,tier=0;if(!idk){if(x[1]=='t'){ok=x[4].filter(k=>k.some(w=>v.toLowerCase().includes(w))).length/x[4].length>=.6}else if(x[1]=='w'){const wc=(v.match(/[A-Za-z']+/g)||[]).length,sn=(v.match(/[.!?]/g)||[]).length;tier=wc<5?1:(wc<15||sn<2)?2:3;if(!/^[A-Z]/.test(v.trim())&&tier>1)tier--;ok=tier>=2}else ok=v.toLowerCase()==x[4].toLowerCase()}
 S.sess.asked.push({p,i:p+i,l:x[0],t:x[1],k:x[5],ok,idk,tier,a:v});
@@ -96,9 +97,9 @@ const u=a=>[...new Set(a)];
 h+=`<h2>目前看起来</h2><p><b class="g">答对的知识点：</b>${u(tags.g).map(t=>`<span class="t">${esc(t)}</span>`).join('')||'暂无'}</p><p><b class="w">还没掌握或不稳定：</b>${u(tags.w).map(t=>`<span class="t">${esc(t)}</span>`).join('')||'暂无'}</p>
 <p class="m">每个知识点只测了 1 题，不能说明真的掌握，之后会用练习继续验证。</p>
 ${planHTML()}<p class="m">翻译按关键词粗判、写作按字数和句数粗判，都不是严格批改，接入 AI 后会更准。</p>
-<button class="s" id="rv">回看我的全部答案</button><button class="s" id="ex">导出我的数据备份</button><button class="s" id="rs">删除我的全部数据并重新测评</button>`;app.innerHTML=h;
-$('#rv').onclick=()=>review(0,report);$('#ex').onclick=()=>{const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='english-backup.json';a.click()};
-$('#rs').onclick=async()=>{if(confirm('确定删除吗？删除后无法恢复。')){await put('profile',null);await put('sess',null);S={profile:null,sess:null};welcome()}}}
+<button class="p" id="hm">回到首页</button><button class="s" id="ct">答题卡</button><button class="s" id="rv">回看我的全部答案</button><button class="s" id="ex">导出我的数据备份</button><button class="s" id="rs">删除我的全部数据并重新测评</button>`;app.innerHTML=h;
+$('#hm').onclick=home;$('#ct').onclick=()=>cardScreen(report);$('#rv').onclick=()=>review(0,report);$('#ex').onclick=()=>{const b=new Blob([JSON.stringify({...S,words:WD},null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='english-backup.json';a.click()};
+$('#rs').onclick=async()=>{if(confirm('确定删除吗？删除后无法恢复。')){await put('profile',null);await put('sess',null);await put('words',null);WD={m:{},fav:[],day:{d:'',n:0}};S={profile:null,sess:null};welcome()}}}
 
 B.s=[
 [1,'c','“My name is Tom.” 的意思是？',['我的名字是汤姆','汤姆是我的老师','我认识汤姆','我喜欢汤姆'],'我的名字是汤姆','基础句意'],
@@ -158,7 +159,48 @@ if(x[3])h+=x[3].map(t=>`<div class="o" style="${t===a.a?'border-color:var(--teal
 h+=a.idk?'<p class="m">你选了“不知道”。</p>':(!x[3]?`<div class="c"><span class="m">你的答案</span><br>${esc(a.a==null?'':a.a)}</div>`:(a.a===undefined?'<p class="m">这题当时没有保存答案。</p>':''));
 h+=`<div class="nv"><button class="g2" id="r1" ${k?'':'disabled'}>‹ 上一题</button>${p=='v'?'':'<button class="g2" id="lk">查词</button>'}<button class="g2" id="r2">${k==A.length-1?'回到'+(S.sess.done?'报告':'当前题'):'下一题 ›'}</button></div>`;
 app.innerHTML=h;$('#r1').onclick=()=>review(k-1,back);$('#r2').onclick=()=>review(k+1,back);if($('#lk'))$('#lk').onclick=()=>sheet()}
+
+let WD=null,WL=null,WQ=[],WC=[],WI=0,SS={n:0,ok:0,bad:[]};
+const DAY=864e5,IV=[0,1,2,4,7,15,30],SP='speechSynthesis' in window;
+const td=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10),sv=()=>put('words',WD);
+const say=w=>{try{const u=new SpeechSynthesisUtterance(w);u.lang='en-US';speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}};
+const spk=w=>SP?`<button class="g2" data-say="${esc(w)}">🔊 发音</button>`:'';
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-say]');if(b)say(b.dataset.say)});
+function wl(){if(!WL){dm();WL=[...DM.entries()].map(([w,x])=>({w,pos:x[0]||'',mean:x[1]}))}return WL}
+const wd=w=>dm().get(w);
+function dueL(){const n=Date.now();return Object.keys(WD.m).filter(w=>WD.m[w].due<=n).sort((a,b)=>WD.m[a].due-WD.m[b].due)}
+function newL(){if(!WD.order){const a=wl().map(x=>x.w);for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}WD.order=a;sv()}
+const lk=(S.profile.lookups||[]).map(x=>{const r=find(x.w);return r&&r.w}).filter(Boolean);return[...new Set([...lk,...WD.fav.filter(w=>dm().has(w)),...WD.order])].filter(w=>!WD.m[w])}
+function nCount(){const d=dueL().length,nw=S.profile.plan?S.profile.plan.nw:10,n=d>20?Math.max(0,nw-Math.ceil((d-20)/2)):nw,dd=WD.day.d==td()?WD.day.n:0;return Math.max(0,n-dd)}
+function nbL(){return[...new Set([...WD.fav,...(S.profile.lookups||[]).map(x=>{const r=find(x.w);return r?r.w:x.w.toLowerCase()}),...Object.keys(WD.m).filter(w=>WD.m[w].wr>=3)])]}
+function home(){const d=dueL().length,n=Math.min(nCount(),newL().length),m=WD.m,ks=Object.keys(m),mas=ks.filter(w=>m[w].st>=4).length;
+app.innerHTML=`<h1>${esc(S.profile.name)}，今天也慢慢来</h1><p class="m">每天只学该学的量，没做完也不会清零。</p><div class="c"><b>今日单词</b><p>待复习 <b>${d}</b> 个　新词 <b>${n}</b> 个</p><p class="m">已学 ${ks.length} 个，较牢固 ${mas} 个</p><button class="p" id="hw" ${d+n?'':'disabled'}>${d+n?'开始学习':'今天的任务做完了'}</button></div><button class="s" id="hn">生词本（${nbL().length}）</button><button class="s" id="hr">能力画像与学习方案</button>`;
+$('#hw').onclick=startW;$('#hn').onclick=notebook;$('#hr').onclick=report}
+function startW(){const D=dueL().slice(0,40),N=newL().slice(0,nCount());WC=N;WQ=[...D,...N];SS={n:0,ok:0,bad:[]};WI=0;if(N.length)return wcard(0);wquiz()}
+function wcard(i){if(i>=WC.length){WI=0;return wquiz()}const w=WC[i],x=wd(w),f=WD.fav.includes(w);
+app.innerHTML=`<p class="m">新词 ${i+1} / ${WC.length}</p><div class="bar"><i style="width:${i/WC.length*100}%"></i></div><div class="c" style="text-align:center"><div style="font-size:34px;font-weight:700">${esc(w)}</div><p class="m">${esc(x[0]||'')}</p><div style="font-size:20px">${esc(x[1])}</div><p class="m">暂时没有例句，之后补充。</p></div><div class="nv">${spk(w)}<button class="g2" id="fv">${f?'已在生词本':'加入生词本'}</button></div><button class="p" id="nx">下一个</button>`;
+$('#fv').onclick=()=>{if(!WD.fav.includes(w))WD.fav.push(w);sv();$('#fv').textContent='已在生词本'};$('#nx').onclick=()=>wcard(i+1)}
+function wquiz(){if(WI>=WQ.length)return wdone();const w=WQ[WI],rec=WD.m[w]||{st:0},t=rec.st<2?'m':rec.st<4?'r':'s',x=wd(w),pool=wl().filter(y=>y.w!=w),same=pool.filter(y=>y.pos&&y.pos==x[0]);
+const ds=[...(same.length>=3?same:pool)].sort(()=>Math.random()-.5).slice(0,3),opts=[...ds,{w,mean:x[1]}].sort(()=>Math.random()-.5);
+let h=`<p class="m">单词 · ${WI+1} / ${WQ.length}</p><div class="bar"><i style="width:${WI/WQ.length*100}%"></i></div>`;
+if(t=='m')h+=`<p class="m">最接近的中文意思是？</p><div class="q"><b>${esc(w)}</b></div>${spk(w)}`+opts.map(o=>`<button class="o" data-v="${esc(o.mean)}">${esc(o.mean)}</button>`).join('');
+else if(t=='r')h+=`<p class="m">下面哪个英文单词的意思是？</p><div class="q"><b>${esc(x[1])}</b></div>`+opts.map(o=>`<button class="o" data-v="${esc(o.w)}">${esc(o.w)}</button>`).join('');
+else h+=`<p class="m">写出这个意思对应的英文单词</p><div class="q"><b>${esc(x[1])}</b></div><p class="m">${esc(x[0]||'')}</p><input id="ty" autocomplete="off" autocapitalize="none" placeholder="拼写"><button class="p" id="ok">提交</button>`;
+h+='<button class="s" id="dk">不知道</button>';app.innerHTML=h;
+const fin=v=>wgrade(w,t,v);document.querySelectorAll('.o').forEach(b=>b.onclick=()=>fin(b.dataset.v));$('#dk').onclick=()=>fin(null);if($('#ok'))$('#ok').onclick=()=>fin($('#ty').value.trim()||null)}
+function wgrade(w,t,v){const x=wd(w),ans=t=='m'?x[1]:w,idk=v===null,ok=!idk&&String(v).toLowerCase()==ans.toLowerCase();
+let r=WD.m[w];if(!r){r=WD.m[w]={st:0,wr:0,seen:0,due:0};if(WD.day.d!=td())WD.day={d:td(),n:0};WD.day.n++}
+r.seen++;if(ok){r.st=Math.min(6,r.st+1);r.due=Date.now()+IV[r.st]*DAY*(r.wr>=2?.6:1);r.rt=0}else{r.wr++;r.st=Math.max(0,r.st-(idk?1:2));r.due=Date.now()+6e5;if(!r.rt){WQ.push(w);r.rt=1}}
+SS.n++;if(ok)SS.ok++;else SS.bad.push(w);sv();
+app.innerHTML=`<div class="c"><b class="${ok?'g':'w'}">${ok?'✓ 答对了':idk?'没关系，记一下':'✗ 不对'}</b><div class="q"><b>${esc(w)}</b> <span class="m">${esc(x[0]||'')}</span><br>${esc(x[1])}</div>${spk(w)}${ok?'':`<p class="m">${t=='s'&&!idk?'你写的：'+esc(v)+'。':''}这个词稍后会再出现。</p>`}</div><button class="p" id="nx">继续</button>`;$('#nx').onclick=()=>{WI++;wquiz()}}
+function wdone(){WQ.forEach(w=>{if(WD.m[w])WD.m[w].rt=0});sv();const b=[...new Set(SS.bad)];
+app.innerHTML=`<h1>今天的单词完成了</h1><p>共作答 ${SS.n} 次，答对 ${SS.ok} 次。</p>${b.length?'<p class="m">需要多看几遍的词</p>'+b.map(w=>`<span class="t">${esc(w)}</span>`).join(''):'<p class="m">全部答对，很好。</p>'}<p class="m">答错的词很快会再出现，答对的词间隔会越来越长。</p><button class="p" id="hm">回到首页</button>`;$('#hm').onclick=home}
+function notebook(){const L=nbL();app.innerHTML=`<div class="nv"><button class="g2" id="bk">‹ 返回</button></div><h1>生词本</h1><p class="m">收藏的词、查过的词、反复答错的词都在这里，没学过的会优先出现在新词里。</p>`+(L.map(w=>{const x=wd(w),r=WD.m[w],tag=WD.fav.includes(w)?'收藏':r&&r.wr>=3?'易错':'查过';return`<div class="c"><b>${esc(w)}</b> <span class="m">${esc(x?x[0]||'':'')}</span> <span class="t">${tag}</span> ${SP?`<button class="g2" data-say="${esc(w)}">🔊</button>`:''}<br>${esc(x?x[1]:'（词库里没有这个词）')}<br><button class="g2" data-rm="${esc(w)}">移出生词本</button></div>`}).join('')||'<p class="m">还空着。做题时点单词查词，会自动记在这里。</p>');
+$('#bk').onclick=home;document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const w=b.dataset.rm;WD.fav=WD.fav.filter(x=>x!=w);S.profile.lookups=(S.profile.lookups||[]).filter(x=>{const r=find(x.w);return(r?r.w:x.w.toLowerCase())!=w});if(WD.m[w])WD.m[w].wr=0;sv();save();notebook()})}
+function cardScreen(back){const A=S.sess.asked;let h='<h1>答题卡</h1><p class="m">深色是已做的题，点一下可以回看（只读）。</p>';
+P.forEach(p=>{const ix=A.map((a,i)=>a.p==p?i:-1).filter(i=>i>=0);h+=`<h2>${NM[p]}</h2><div>`;for(let n=0;n<PERS[p];n++)h+=ix[n]!==undefined?`<button class="nb on" data-k="${ix[n]}">${n+1}</button>`:`<span class="nb${!S.sess.done&&P[S.sess.part]==p&&n==ix.length?' cur':''}">${n+1}</span>`;h+='</div>'});
+h+='<button class="p" id="bk">'+(S.sess.done?'返回':'回到答题')+'</button>';app.innerHTML=h;document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>review(+b.dataset.k,()=>cardScreen(back)));$('#bk').onclick=back}
 (async()=>{try{db=await open()}catch(e){app.innerHTML='<h1>无法使用本地存储</h1><p>你的浏览器禁用了存储功能，进度无法保存。请换用 Chrome 并关闭无痕模式。</p>';return}
-S.profile=await get('profile')||null;S.sess=await get('sess')||null;
-if(!S.profile||!S.sess)return welcome();if(S.sess.done&&S.sess.part<P.length-1){S.sess.done=false;S.sess.part++;S.sess.level=2;S.sess.streak=0;await save();return notice()}if(S.sess.done)return report();quiz()})();
+S.profile=await get('profile')||null;S.sess=await get('sess')||null;WD=await get('words')||{};WD.m=WD.m||{};WD.fav=WD.fav||[];WD.day=WD.day||{d:'',n:0};
+if(!S.profile||!S.sess)return welcome();if(S.sess.done&&S.sess.part<P.length-1){S.sess.done=false;S.sess.part++;S.sess.level=2;S.sess.streak=0;await save();return notice()}if(S.sess.done)return home();quiz()})();
 </script></body></html>
