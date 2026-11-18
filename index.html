@@ -17,7 +17,9 @@ input,select{width:100%;padding:13px;border-radius:12px;border:1.5px solid var(-
 button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
 .c{background:var(--card);border-radius:14px;padding:14px 16px;margin:12px 0;border:1px solid var(--line)}
 .t{display:inline-block;padding:2px 10px;border-radius:12px;background:var(--sky);border:1px solid var(--line);font-size:13px;margin:3px 4px 3px 0}.w{color:var(--no)}.g{color:var(--teal)}
+.wd{border-bottom:1.5px dotted var(--teal)}.nv{display:flex;justify-content:space-between;gap:8px;margin:0 0 12px}.g2{padding:7px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}.g2:disabled{opacity:.4}#sh{position:fixed;left:0;right:0;bottom:0;max-height:55vh;overflow:auto;background:var(--card);border-top:1px solid var(--line);padding:14px 18px max(16px,env(safe-area-inset-bottom));z-index:9;box-shadow:0 -4px 16px rgba(0,0,0,.18)}#sh input{width:auto;flex:1}
 </style></head><body><main id="app">加载中…</main>
+<script src="dict.js"></script>
 <script>
 const P=['v','g','s','r','t','w'],NM={v:'词汇',g:'基础语法',s:'句子理解',r:'阅读理解',t:'翻译',w:'写作'},PERS={v:8,g:8,s:8,r:6,t:4,w:1},LV=['起步','入门','基础','进阶','中级','较高'];
 const B={
@@ -70,15 +72,15 @@ S.sess={part:0,level:2,streak:0,asked:[],done:false};await save();quiz()}}
 function pick(){const p=P[S.sess.part],d=B[p],u=S.sess.asked.map(a=>a.i);
 for(let k=0;k<5;k++)for(const l of[S.sess.level-k,S.sess.level+k]){if(l<1||l>5)continue;const c=d.map((x,i)=>i).filter(i=>d[i][0]==l&&!u.includes(p+i));if(c.length)return c[Math.floor(Math.random()*c.length)]}return -1}
 const here=()=>S.sess.asked.filter(a=>a.p==P[S.sess.part]);
-function quiz(){const p=P[S.sess.part],n=here().length;if(n>=PERS[p])return part_end();const i=pick();if(i<0)return part_end();const x=B[p][i];
-let h=`<p class="m">${NM[p]} · 第 ${n+1} / ${PERS[p]} 题</p><div class="bar"><i style="width:${n/PERS[p]*100}%"></i></div>`;
-if(x[1]=='m')h+=`<p class="m">下面这个单词最接近的意思是？</p><div class="q"><b>${esc(x[2])}</b></div>`;else h+=(x[6]?`<div class="c" style="font-size:16px">${esc(x[6])}</div>`:'')+`<div class="q">${esc(x[2])}</div>`;
+function quiz(){const p=P[S.sess.part],n=here().length;CP=p;if(n>=PERS[p])return part_end();const i=pick();if(i<0)return part_end();const x=B[p][i];
+let h=`<div class="nv"><button class="g2" id="pv" ${S.sess.asked.length?'':'disabled'}>‹ 上一题</button>${p=='v'?'':'<button class="g2" id="lk">查词</button>'}</div><p class="m">${NM[p]} · 第 ${n+1} / ${PERS[p]} 题</p><div class="bar"><i style="width:${n/PERS[p]*100}%"></i></div>`;
+if(x[1]=='m')h+=`<p class="m">下面这个单词最接近的意思是？</p><div class="q"><b>${esc(x[2])}</b></div>`;else h+=(x[6]?`<div class="c" style="font-size:16px">${W(x[6])}</div>`:'')+`<div class="q">${W(x[2])}</div>`;
 if(x[3]){const o=[...x[3]].sort(()=>Math.random()-.5);h+=o.map(t=>`<button class="o" data-v="${esc(t)}">${esc(t)}</button>`).join('')}else h+=`${x[1]=='w'?'<textarea id="ty" rows="6" placeholder="在这里写英文，不会写就点“不知道”" style="width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:inherit;font:inherit"></textarea>':'<input id="ty" autocomplete="off" autocapitalize="none" placeholder="输入你的答案">'}`+`<button class="p" id="ok">提交</button>`;
 h+=`<button class="s" id="dk">不知道</button><p class="m">进度已自动保存，可以随时退出，下次继续。</p>`;app.innerHTML=h;
-const fin=v=>ans(p,i,v);document.querySelectorAll('.o').forEach(b=>b.onclick=()=>fin(b.dataset.v));$('#dk').onclick=()=>fin(null);
+$('#pv').onclick=()=>review(S.sess.asked.length-1,quiz);if($('#lk'))$('#lk').onclick=()=>sheet();const fin=v=>ans(p,i,v);document.querySelectorAll('.o').forEach(b=>b.onclick=()=>fin(b.dataset.v));$('#dk').onclick=()=>fin(null);
 if($('#ok'))$('#ok').onclick=()=>{const v=$('#ty').value.trim();v?fin(v):fin(null)}}
 async function ans(p,i,v){const x=B[p][i],idk=v===null;let ok=false,tier=0;if(!idk){if(x[1]=='t'){ok=x[4].filter(k=>k.some(w=>v.toLowerCase().includes(w))).length/x[4].length>=.6}else if(x[1]=='w'){const wc=(v.match(/[A-Za-z']+/g)||[]).length,sn=(v.match(/[.!?]/g)||[]).length;tier=wc<5?1:(wc<15||sn<2)?2:3;if(!/^[A-Z]/.test(v.trim())&&tier>1)tier--;ok=tier>=2}else ok=v.toLowerCase()==x[4].toLowerCase()}
-S.sess.asked.push({p,i:p+i,l:x[0],t:x[1],k:x[5],ok,idk,tier});
+S.sess.asked.push({p,i:p+i,l:x[0],t:x[1],k:x[5],ok,idk,tier,a:v});
 if(ok){S.sess.streak++;if(S.sess.streak>=2){S.sess.level=Math.min(5,S.sess.level+1);S.sess.streak=0}}else{S.sess.level=Math.max(1,S.sess.level-1);S.sess.streak=0}
 await save();quiz()}
 function part_end(){const last=S.sess.part>=P.length-1;if(last){S.sess.done=true;S.profile.diagnosisCompleted=true;S.profile.plan=mkplan();save().then(report);return}
@@ -94,8 +96,8 @@ const u=a=>[...new Set(a)];
 h+=`<h2>目前看起来</h2><p><b class="g">答对的知识点：</b>${u(tags.g).map(t=>`<span class="t">${esc(t)}</span>`).join('')||'暂无'}</p><p><b class="w">还没掌握或不稳定：</b>${u(tags.w).map(t=>`<span class="t">${esc(t)}</span>`).join('')||'暂无'}</p>
 <p class="m">每个知识点只测了 1 题，不能说明真的掌握，之后会用练习继续验证。</p>
 ${planHTML()}<p class="m">翻译按关键词粗判、写作按字数和句数粗判，都不是严格批改，接入 AI 后会更准。</p>
-<button class="s" id="ex">导出我的数据备份</button><button class="s" id="rs">删除我的全部数据并重新测评</button>`;app.innerHTML=h;
-$('#ex').onclick=()=>{const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='english-backup.json';a.click()};
+<button class="s" id="rv">回看我的全部答案</button><button class="s" id="ex">导出我的数据备份</button><button class="s" id="rs">删除我的全部数据并重新测评</button>`;app.innerHTML=h;
+$('#rv').onclick=()=>review(0,report);$('#ex').onclick=()=>{const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='english-backup.json';a.click()};
 $('#rs').onclick=async()=>{if(confirm('确定删除吗？删除后无法恢复。')){await put('profile',null);await put('sess',null);S={profile:null,sess:null};welcome()}}}
 
 B.s=[
@@ -133,6 +135,29 @@ const other=(L.r<=2?'阅读：前 2 周只做句子精读，第 3 周起加入�
 return{start,why,min:m,split:mm.map((x,i)=>[n[i],x]),nw:v<=1?6:v<=2?8:v<=3?12:15,other,L,created:Date.now()}}
 function planHTML(){const p=S.profile.plan;if(!p)return'';return `<h2>第一阶段学习方案（初版）</h2><div class="c"><b>起点：</b>${esc(p.start)}<p class="m">${p.why.map(esc).join('<br>')}</p></div><div class="c"><b>每天 ${p.min} 分钟</b><p>${p.split.map(x=>`<span class="t">${x[0]} ${x[1]} 分钟</span>`).join('')}</p><p class="m">新词每天 ${p.nw} 个，旧词复习优先。</p></div><div class="c"><b>阅读、翻译、写作</b><p class="m">${esc(p.other)}</p></div><p class="m">这是初版，会按你的实际表现调整，建议第 2 周末做一次阶段检测。</p>`}
 function notice(){app.innerHTML=`<h1>新增 4 项测评已开放</h1><p class="m">句子理解、阅读、翻译、写作，大约 8 分钟。做完就能生成你的学习方案。</p><button class="p" id="nx">继续测评</button>`;$('#nx').onclick=quiz}
+
+let CP='',DM=null;
+const IRR={was:'be',were:'be',been:'be',is:'be',am:'be',are:'be',went:'go',gone:'go',did:'do',does:'do',done:'do',had:'have',has:'have',made:'make',said:'say',took:'take',taken:'take',bought:'buy',broke:'break',broken:'break',thought:'think',brought:'bring',taught:'teach',left:'leave',ate:'eat',eaten:'eat',saw:'see',seen:'see',came:'come',got:'get',gave:'give',given:'give',knew:'know',known:'know',told:'tell',found:'find',felt:'feel',kept:'keep',met:'meet',ran:'run',wrote:'write',written:'write',spoke:'speak',spoken:'speak',began:'begin',begun:'begin',children:'child',men:'man',women:'woman'};
+function dm(){if(DM)return DM;DM=new Map();(typeof DICT==='string'?DICT:'').split('\n').forEach(l=>{const a=l.split('|');if(a[0])DM.set(a[0].toLowerCase(),[a[1],a[2]])});return DM}
+function stems(w){const c=[w];if(IRR[w])c.push(IRR[w]);const r=(a,b)=>{if(w.endsWith(a)&&w.length>a.length+1)c.push(w.slice(0,-a.length)+b)};r("'s",'');r('ies','y');r('es','');r('s','');r('ed','');r('ed','e');r('d','');r('ing','');r('ing','e');r('er','');r('est','');r('ly','');const m=w.match(/^(.*?)(.)\2(ed|ing|er|est)$/);if(m)c.push(m[1]+m[2]);return c}
+function find(w){const m=dm(),lw=w.toLowerCase();for(const c of stems(lw))if(m.has(c)){const x=m.get(c);return{w:c,pos:x[0]||'',mean:x[1],form:c!==lw}}return null}
+function W(t){return String(t).split(/([A-Za-z']+)/).map((s,i)=>i%2&&CP!='v'?`<span class="wd">${esc(s)}</span>`:esc(s)).join('')}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('.wd');if(t)sheet(t.textContent)});
+function sheet(w){let s=document.getElementById('sh');if(!s){document.body.insertAdjacentHTML('beforeend','<div id="sh" hidden></div>');s=document.getElementById('sh')}
+s.hidden=false;s.innerHTML=`<div style="display:flex;gap:8px"><input id="lq" placeholder="输入英文单词" value="${esc(w||'')}" autocapitalize="none" style="margin:0"><button class="g2" id="lg">查</button><button class="g2" id="lx">关闭</button></div><div id="lr" style="margin-top:10px" class="m">点题目里带虚线的单词，或在上面输入。</div>`;
+$('#lx').onclick=()=>{s.hidden=true};$('#lg').onclick=()=>lookup($('#lq').value);$('#lq').onkeydown=e=>{if(e.key=='Enter')lookup($('#lq').value)};if(w)lookup(w)}
+async function lookup(w){w=(w||'').trim().replace(/[^A-Za-z']/g,'');const o=$('#lr');if(!w){o.textContent='请输入英文单词。';return}
+const r=find(w);if(r){o.innerHTML=`<b style="font-size:20px">${esc(r.w)}</b> <span class="m">${esc(r.pos)}</span><br>${esc(r.mean)}${r.form?`<p class="m">你查的是“${esc(w)}”，这里显示的是原形。</p>`:''}`}
+else{o.textContent='词库里没有，正在在线查询…';try{const c=new AbortController(),t=setTimeout(()=>c.abort(),6000);const j=await(await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(w)+'&langpair=en|zh-CN',{signal:c.signal})).json();clearTimeout(t);const m=j&&j.responseData&&j.responseData.translatedText;o.innerHTML=m&&m.toLowerCase()!=w.toLowerCase()?`<b>${esc(w)}</b><br>${esc(m)}<p class="m">在线机器翻译，仅供参考。</p>`:'没查到，可以换个写法再试。'}catch(e){o.textContent='在线查询失败，请检查网络。'}}
+const L=S.profile.lookups=S.profile.lookups||[],lw=w.toLowerCase();if(!L.some(x=>x.w==lw)){L.push({w:lw,t:Date.now(),part:CP});save()}}
+function review(k,back){const A=S.sess.asked;if(k>=A.length)return back();if(k<0)return;const a=A[k],p=a.p,x=B[p][+String(a.i).slice(1)];CP=p;
+const nth=A.slice(0,k+1).filter(y=>y.p==p).length;
+let h=`<p class="m">回看 · ${NM[p]} 第 ${nth} 题（只读，测评中不显示对错）</p><div class="bar"><i style="width:${(k+1)/A.length*100}%"></i></div>`;
+h+=x[1]=='m'?`<p class="m">下面这个单词最接近的意思是？</p><div class="q"><b>${esc(x[2])}</b></div>`:(x[6]?`<div class="c" style="font-size:16px">${W(x[6])}</div>`:'')+`<div class="q">${W(x[2])}</div>`;
+if(x[3])h+=x[3].map(t=>`<div class="o" style="${t===a.a?'border-color:var(--teal);border-width:2.5px':'opacity:.6'}">${esc(t)}${t===a.a?'　← 你的选择':''}</div>`).join('');
+h+=a.idk?'<p class="m">你选了“不知道”。</p>':(!x[3]?`<div class="c"><span class="m">你的答案</span><br>${esc(a.a==null?'':a.a)}</div>`:(a.a===undefined?'<p class="m">这题当时没有保存答案。</p>':''));
+h+=`<div class="nv"><button class="g2" id="r1" ${k?'':'disabled'}>‹ 上一题</button>${p=='v'?'':'<button class="g2" id="lk">查词</button>'}<button class="g2" id="r2">${k==A.length-1?'回到'+(S.sess.done?'报告':'当前题'):'下一题 ›'}</button></div>`;
+app.innerHTML=h;$('#r1').onclick=()=>review(k-1,back);$('#r2').onclick=()=>review(k+1,back);if($('#lk'))$('#lk').onclick=()=>sheet()}
 (async()=>{try{db=await open()}catch(e){app.innerHTML='<h1>无法使用本地存储</h1><p>你的浏览器禁用了存储功能，进度无法保存。请换用 Chrome 并关闭无痕模式。</p>';return}
 S.profile=await get('profile')||null;S.sess=await get('sess')||null;
 if(!S.profile||!S.sess)return welcome();if(S.sess.done&&S.sess.part<P.length-1){S.sess.done=false;S.sess.part++;S.sess.level=2;S.sess.streak=0;await save();return notice()}if(S.sess.done)return report();quiz()})();
