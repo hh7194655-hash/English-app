@@ -19,7 +19,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .t{display:inline-block;padding:2px 10px;border-radius:12px;background:var(--sky);border:1px solid var(--line);font-size:13px;margin:3px 4px 3px 0}.w{color:var(--no)}.g{color:var(--teal)}
 </style></head><body><main id="app">加载中…</main>
 <script>
-const P=['v','g'],NM={v:'词汇',g:'基础语法'},PER=8,LV=['起步','入门','基础','进阶','中级','较高'];
+const P=['v','g','s','r','t','w'],NM={v:'词汇',g:'基础语法',s:'句子理解',r:'阅读理解',t:'翻译',w:'写作'},PERS={v:8,g:8,s:8,r:6,t:4,w:1},LV=['起步','入门','基础','进阶','中级','较高'];
 const B={
 v:[
 [1,'m','book',['书','桌子','笔','门'],'书','常见名词'],
@@ -60,7 +60,7 @@ const get=k=>new Promise(r=>{try{const q=db.transaction('kv').objectStore('kv').
 const put=(k,v)=>new Promise(r=>{try{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>r(true);t.onerror=()=>r(false)}catch(e){r(false)}});
 const save=async()=>{const ok=await put('profile',S.profile)&&await put('sess',S.sess);if(!ok)alert('保存失败：浏览器存储不可用，进度可能丢失。')};
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-function welcome(){app.innerHTML=`<h1>先了解你的英语现状</h1><p class="m">接下来是一次英语水平测评，共 6 部分，现已开放 2 部分。测评期间不显示对错，不会就点“不知道”，不要猜，这样结果才准。</p>
+function welcome(){app.innerHTML=`<h1>先了解你的英语现状</h1><p class="m">接下来是一次英语水平测评，共 6 部分，约 15 分钟，可以分多次完成。测评期间不显示对错，不会就点“不知道”，不要猜，这样结果才准。</p>
 <h2>你的称呼</h2><input id="nm" maxlength="12" placeholder="想让我怎么称呼你">
 <h2>MBTI（选填）</h2><input id="mb" maxlength="4" placeholder="例如 INFP，不填也可以">
 <h2>每天能学多久</h2><select id="mn"><option>20</option><option selected>30</option><option>45</option><option>60</option></select>
@@ -70,34 +70,70 @@ S.sess={part:0,level:2,streak:0,asked:[],done:false};await save();quiz()}}
 function pick(){const p=P[S.sess.part],d=B[p],u=S.sess.asked.map(a=>a.i);
 for(let k=0;k<5;k++)for(const l of[S.sess.level-k,S.sess.level+k]){if(l<1||l>5)continue;const c=d.map((x,i)=>i).filter(i=>d[i][0]==l&&!u.includes(p+i));if(c.length)return c[Math.floor(Math.random()*c.length)]}return -1}
 const here=()=>S.sess.asked.filter(a=>a.p==P[S.sess.part]);
-function quiz(){const p=P[S.sess.part],n=here().length;if(n>=PER)return part_end();const i=pick();if(i<0)return part_end();const x=B[p][i];
-let h=`<p class="m">${NM[p]} · 第 ${n+1} / ${PER} 题</p><div class="bar"><i style="width:${n/PER*100}%"></i></div>`;
-if(x[1]=='m')h+=`<p class="m">下面这个单词最接近的意思是？</p><div class="q"><b>${esc(x[2])}</b></div>`;else h+=`<div class="q">${esc(x[2])}</div>`;
-if(x[3]){const o=[...x[3]].sort(()=>Math.random()-.5);h+=o.map(t=>`<button class="o" data-v="${esc(t)}">${esc(t)}</button>`).join('')}else h+=`<input id="ty" autocomplete="off" autocapitalize="none" placeholder="输入英文单词">`+`<button class="p" id="ok">提交</button>`;
+function quiz(){const p=P[S.sess.part],n=here().length;if(n>=PERS[p])return part_end();const i=pick();if(i<0)return part_end();const x=B[p][i];
+let h=`<p class="m">${NM[p]} · 第 ${n+1} / ${PERS[p]} 题</p><div class="bar"><i style="width:${n/PERS[p]*100}%"></i></div>`;
+if(x[1]=='m')h+=`<p class="m">下面这个单词最接近的意思是？</p><div class="q"><b>${esc(x[2])}</b></div>`;else h+=(x[6]?`<div class="c" style="font-size:16px">${esc(x[6])}</div>`:'')+`<div class="q">${esc(x[2])}</div>`;
+if(x[3]){const o=[...x[3]].sort(()=>Math.random()-.5);h+=o.map(t=>`<button class="o" data-v="${esc(t)}">${esc(t)}</button>`).join('')}else h+=`${x[1]=='w'?'<textarea id="ty" rows="6" placeholder="在这里写英文，不会写就点“不知道”" style="width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:inherit;font:inherit"></textarea>':'<input id="ty" autocomplete="off" autocapitalize="none" placeholder="输入你的答案">'}`+`<button class="p" id="ok">提交</button>`;
 h+=`<button class="s" id="dk">不知道</button><p class="m">进度已自动保存，可以随时退出，下次继续。</p>`;app.innerHTML=h;
 const fin=v=>ans(p,i,v);document.querySelectorAll('.o').forEach(b=>b.onclick=()=>fin(b.dataset.v));$('#dk').onclick=()=>fin(null);
 if($('#ok'))$('#ok').onclick=()=>{const v=$('#ty').value.trim();v?fin(v):fin(null)}}
-async function ans(p,i,v){const x=B[p][i],idk=v===null,ok=!idk&&v.toLowerCase()==x[4].toLowerCase();
-S.sess.asked.push({p,i:p+i,l:x[0],t:x[1],k:x[5],ok,idk});
+async function ans(p,i,v){const x=B[p][i],idk=v===null;let ok=false,tier=0;if(!idk){if(x[1]=='t'){ok=x[4].filter(k=>k.some(w=>v.toLowerCase().includes(w))).length/x[4].length>=.6}else if(x[1]=='w'){const wc=(v.match(/[A-Za-z']+/g)||[]).length,sn=(v.match(/[.!?]/g)||[]).length;tier=wc<5?1:(wc<15||sn<2)?2:3;if(!/^[A-Z]/.test(v.trim())&&tier>1)tier--;ok=tier>=2}else ok=v.toLowerCase()==x[4].toLowerCase()}
+S.sess.asked.push({p,i:p+i,l:x[0],t:x[1],k:x[5],ok,idk,tier});
 if(ok){S.sess.streak++;if(S.sess.streak>=2){S.sess.level=Math.min(5,S.sess.level+1);S.sess.streak=0}}else{S.sess.level=Math.max(1,S.sess.level-1);S.sess.streak=0}
 await save();quiz()}
-function part_end(){const last=S.sess.part>=P.length-1;if(last){S.sess.done=true;save().then(report);return}
+function part_end(){const last=S.sess.part>=P.length-1;if(last){S.sess.done=true;S.profile.diagnosisCompleted=true;S.profile.plan=mkplan();save().then(report);return}
 app.innerHTML=`<h1>${NM[P[S.sess.part]]}部分完成</h1><p class="m">下一部分：${NM[P[S.sess.part+1]]}。现在休息一下也可以，进度已保存。</p><button class="p" id="nx">继续</button>`;
 $('#nx').onclick=async()=>{S.sess.part++;S.sess.level=2;S.sess.streak=0;await save();quiz()}}
 function est(a){let b=0;for(let l=1;l<=5;l++){const r=a.filter(x=>x.l==l);if(r.length&&r.filter(x=>x.ok).length/r.length>=.5)b=l}return b}
-function report(){const pf=S.profile;let h=`<h1>${esc(pf.name)}，这是你的初步画像</h1><p class="m">已完成 ${P.length} / 6 项测评。因为还有 4 项没测，<b>诊断尚未完成</b>，暂不生成正式学习计划，避免凭不完整的数据安排课程。</p>`;
+function report(){const pf=S.profile;let h=`<h1>${esc(pf.name)}，的英语能力画像</h1><p class="m">6 项测评已全部完成。每部分题量少，结果都是“暂定”，之后会用学习中的表现不断修正。</p>`;
 const tags={g:[],w:[]};
-for(const p of P){const a=S.sess.asked.filter(x=>x.p==p),e=est(a);h+=`<div class="c"><b>${NM[p]}</b>：${LV[e]}（暂定）<p class="m">共 ${a.length} 题，答对 ${a.filter(x=>x.ok).length}，选“不知道” ${a.filter(x=>x.idk).length}。题量少，结果仅供参考。</p>`;
+for(const p of P){const a=S.sess.asked.filter(x=>x.p==p),e=lv(p);h+=`<div class="c"><b>${NM[p]}</b>：${LV[e]}（暂定）<p class="m">共 ${a.length} 题，答对 ${a.filter(x=>x.ok).length}，选“不知道” ${a.filter(x=>x.idk).length}。题量少，结果仅供参考。</p>`;
 if(p=='v'){const T={m:'认出',c:'理解',s:'会用'};h+=['m','c','s'].map(t=>{const r=a.filter(x=>x.t==t);return r.length?`<span class="t">${T[t]}：${r.filter(x=>x.ok).length}/${r.length}</span>`:''}).join('')}h+='</div>';
 a.forEach(x=>(x.ok?tags.g:tags.w).push(x.k+(x.idk?'（不会）':'')))}
 const u=a=>[...new Set(a)];
 h+=`<h2>目前看起来</h2><p><b class="g">答对的知识点：</b>${u(tags.g).map(t=>`<span class="t">${esc(t)}</span>`).join('')||'暂无'}</p><p><b class="w">还没掌握或不稳定：</b>${u(tags.w).map(t=>`<span class="t">${esc(t)}</span>`).join('')||'暂无'}</p>
 <p class="m">每个知识点只测了 1 题，不能说明真的掌握，之后会用练习继续验证。</p>
-<h2>还没测评</h2><p><span class="t">句子理解</span><span class="t">阅读理解</span><span class="t">翻译</span><span class="t">写作</span></p><p class="m">这 4 部分在下一次更新开放，开放后你可以接着做。</p>
+${planHTML()}<p class="m">翻译按关键词粗判、写作按字数和句数粗判，都不是严格批改，接入 AI 后会更准。</p>
 <button class="s" id="ex">导出我的数据备份</button><button class="s" id="rs">删除我的全部数据并重新测评</button>`;app.innerHTML=h;
 $('#ex').onclick=()=>{const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='english-backup.json';a.click()};
 $('#rs').onclick=async()=>{if(confirm('确定删除吗？删除后无法恢复。')){await put('profile',null);await put('sess',null);S={profile:null,sess:null};welcome()}}}
+
+B.s=[
+[1,'c','“My name is Tom.” 的意思是？',['我的名字是汤姆','汤姆是我的老师','我认识汤姆','我喜欢汤姆'],'我的名字是汤姆','基础句意'],
+[1,'c','“She reads a book.” 中，主语是哪个词？',['She','reads','a','book'],'She','主语'],
+[2,'c','哪一句是正确的？',["He don't like milk.","He doesn't like milk.","He not like milk.","He doesn't likes milk."],"He doesn't like milk.",'否定句'],
+[2,'c','“I eat an apple.” 中，宾语是？',['I','eat','an apple','apple eat'],'an apple','宾语'],
+[3,'c','“She is always late for class.” 的意思是？',['她上课总是迟到','她总是早到','她从不上课','她喜欢上课'],'她上课总是迟到','句子整体含义'],
+[3,'c','“The boy looks happy.” 中 looks 是什么用法？',['系动词，连接主语和表语','表示“看”的动作','助动词','情态动词'],'系动词，连接主语和表语','主系表'],
+[4,'c','“The man who is standing there is my uncle.” 中 who is standing there 修饰谁？',['the man','uncle','there','standing'],'the man','定语从句'],
+[4,'c','“It is said that he has left.” 的意思是？',['据说他已经离开了','他说他要离开','有人说他在这儿','他被人说走了'],'据说他已经离开了','长句理解'],
+[5,'c','“Had I known, I would have told you.” 的意思是？',['要是我早知道，我就告诉你了','我知道，所以告诉了你','我曾经告诉过你','如果我知道，我就会告诉你（现在）'],'要是我早知道，我就告诉你了','倒装与虚拟'],
+[5,'c','“What he said made me think twice.” 中的主语是？',['What he said','he','me','think twice'],'What he said','主语从句']];
+const T1='Tom has a dog. Its name is Max. Every morning, Tom takes Max to the park. They play there for an hour.',T2='Many people think reading is boring. But Lisa, a high school student, reads for twenty minutes every night. She says it helps her relax and learn new words. Now she reads three books a month.',T3='Although online shopping saves time, it may lead people to buy things they do not need. Experts suggest making a list before shopping and waiting a day before paying, so that we can tell the difference between what we want and what we need.';
+B.r=[
+[1,'c','What is the dog’s name?',['Max','Tom','Park','Hour'],'Max','找关键信息',T1],
+[2,'c','When does Tom take the dog to the park?',['In the morning','At night','In the afternoon','After school'],'In the morning','细节理解',T1],
+[3,'c','Why does Lisa read every night?',['It helps her relax and learn words','Her teacher asks her to','She has no other hobby','She wants to win a prize'],'It helps her relax and learn words','理解上下文',T2],
+[3,'c','What can we infer about Lisa?',['She has made reading a habit','She dislikes books','She reads only on weekends','She has finished school'],'She has made reading a habit','推断',T2],
+[4,'c','What do experts suggest?',['Make a list and wait a day before paying','Never shop online','Buy more things at once','Pay quickly to save time'],'Make a list and wait a day before paying','细节理解',T3],
+[5,'c','What is the main idea of the passage?',['Online shopping needs careful control','Online shopping is cheaper','Experts dislike shopping','Lists are hard to make'],'Online shopping needs careful control','主旨与逻辑',T3]];
+B.t=[
+[1,'t','把这句话翻译成中文：I like apples.',0,[['我'],['喜欢'],['苹果']],'英译中'],
+[2,'t','把这句话翻译成英文：她每天早上跑步。',0,[['she'],['run','jog'],['morning'],['every']],'中译英'],
+[3,'t','把这句话翻译成中文：If it rains tomorrow, we will stay at home.',0,[['如果','假如','要是'],['下雨'],['明天'],['在家','待在家','留在家','呆在家']],'英译中（条件句）'],
+[4,'t','把这句话翻译成英文：我们必须保护环境。',0,[['we'],['must','should','have to','need'],['protect','save'],['environment']],'中译英']];
+B.w=[[1,'w','用英文写 2 到 3 句话介绍你自己，比如名字、身份、爱好。写不出来可以点“不知道”。',0,null,'写作']];
+function lv(p){const a=S.sess.asked.filter(x=>x.p==p);return p=='w'?(a[0]?a[0].tier:0):est(a)}
+function mkplan(){const L={};P.forEach(p=>L[p]=lv(p));const m=S.profile.minutes,g=L.g,v=L.v;
+const start=g<=1?'句子基础：词类、主谓宾、be动词':g==2?'动词基础：一般现在时、一般过去时、疑问句与否定句':g==3?'时态进阶：完成时、被动语态、比较级':'复杂句型：各类从句、非谓语动词、虚拟语气';
+let f=[.17,.27,.33,.17,.06];if(g<=2){f[2]+=.07;f[1]-=.07}if(v<=2){f[0]+=.05;f[3]-=.05}
+const n=['旧词复习','新词学习','语法教学','互动练习','今日总结'],mm=f.map(x=>Math.round(x*m));mm[4]+=m-mm.reduce((a,b)=>a+b,0);
+const why=[`语法暂定“${LV[g]}”，所以从最靠前的未掌握点开始，不跳级。`,v<=2?'词汇暂定偏弱，增加旧词复习，新词量保守。':'词汇暂定不弱，保持常规新词量。',g<=2?'语法薄弱，语法教学时间增加。':'语法有一定基础，练习时间保持。'];
+const other=(L.r<=2?'阅读：前 2 周只做句子精读，第 3 周起加入短文。':'阅读：第 1 周起每周 2 篇短文。')+(L.t<=2?'翻译和写作：先从简单句开始，不直接写作文。':'翻译和写作：第 2 周起加入段落练习。');
+return{start,why,min:m,split:mm.map((x,i)=>[n[i],x]),nw:v<=1?6:v<=2?8:v<=3?12:15,other,L,created:Date.now()}}
+function planHTML(){const p=S.profile.plan;if(!p)return'';return `<h2>第一阶段学习方案（初版）</h2><div class="c"><b>起点：</b>${esc(p.start)}<p class="m">${p.why.map(esc).join('<br>')}</p></div><div class="c"><b>每天 ${p.min} 分钟</b><p>${p.split.map(x=>`<span class="t">${x[0]} ${x[1]} 分钟</span>`).join('')}</p><p class="m">新词每天 ${p.nw} 个，旧词复习优先。</p></div><div class="c"><b>阅读、翻译、写作</b><p class="m">${esc(p.other)}</p></div><p class="m">这是初版，会按你的实际表现调整，建议第 2 周末做一次阶段检测。</p>`}
+function notice(){app.innerHTML=`<h1>新增 4 项测评已开放</h1><p class="m">句子理解、阅读、翻译、写作，大约 8 分钟。做完就能生成你的学习方案。</p><button class="p" id="nx">继续测评</button>`;$('#nx').onclick=quiz}
 (async()=>{try{db=await open()}catch(e){app.innerHTML='<h1>无法使用本地存储</h1><p>你的浏览器禁用了存储功能，进度无法保存。请换用 Chrome 并关闭无痕模式。</p>';return}
 S.profile=await get('profile')||null;S.sess=await get('sess')||null;
-if(!S.profile||!S.sess)return welcome();if(S.sess.done)return report();quiz()})();
+if(!S.profile||!S.sess)return welcome();if(S.sess.done&&S.sess.part<P.length-1){S.sess.done=false;S.sess.part++;S.sess.level=2;S.sess.streak=0;await save();return notice()}if(S.sess.done)return report();quiz()})();
 </script></body></html>
