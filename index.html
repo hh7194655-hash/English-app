@@ -160,6 +160,8 @@ h+=a.idk?'<p class="m">你选了“不知道”。</p>':(!x[3]?`<div class="c"><
 h+=`<div class="nv"><button class="g2" id="r1" ${k?'':'disabled'}>‹ 上一题</button>${p=='v'?'':'<button class="g2" id="lk">查词</button>'}<button class="g2" id="r2">${k==A.length-1?'回到'+(S.sess.done?'报告':'当前题'):'下一题 ›'}</button></div>`;
 app.innerHTML=h;$('#r1').onclick=()=>review(k-1,back);$('#r2').onclick=()=>review(k+1,back);if($('#lk'))$('#lk').onclick=()=>sheet()}
 
+let SFX={};try{SFX={r:new Audio('sfx-right.mp3'),w:new Audio('sfx-wrong.mp3')};SFX.r.preload=SFX.w.preload='auto'}catch(e){}
+const sfx=ok=>{if(S.profile&&S.profile.sound===false)return;const a=ok?SFX.r:SFX.w;try{a.currentTime=0;a.play().catch(()=>{})}catch(e){}};
 let WD=null,WL=null,WQ=[],WC=[],WI=0,SS={n:0,ok:0,bad:[]};
 const DAY=864e5,IV=[0,1,2,4,7,15,30],SP='speechSynthesis' in window;
 const td=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10),sv=()=>put('words',WD);
@@ -174,7 +176,7 @@ const lk=(S.profile.lookups||[]).map(x=>{const r=find(x.w);return r&&r.w}).filte
 function nCount(){const d=dueL().length,nw=S.profile.plan?S.profile.plan.nw:10,n=d>20?Math.max(0,nw-Math.ceil((d-20)/2)):nw,dd=WD.day.d==td()?WD.day.n:0;return Math.max(0,n-dd)}
 function nbL(){return[...new Set([...WD.fav,...(S.profile.lookups||[]).map(x=>{const r=find(x.w);return r?r.w:x.w.toLowerCase()}),...Object.keys(WD.m).filter(w=>WD.m[w].wr>=3)])]}
 function home(){const d=dueL().length,n=Math.min(nCount(),newL().length),m=WD.m,ks=Object.keys(m),mas=ks.filter(w=>m[w].st>=4).length;
-app.innerHTML=`<h1>${esc(S.profile.name)}，今天也慢慢来</h1><p class="m">每天只学该学的量，没做完也不会清零。</p><div class="c"><b>今日单词</b><p>待复习 <b>${d}</b> 个　新词 <b>${n}</b> 个</p><p class="m">已学 ${ks.length} 个，较牢固 ${mas} 个</p><button class="p" id="hw" ${d+n?'':'disabled'}>${d+n?'开始学习':'今天的任务做完了'}</button></div><button class="s" id="hn">生词本（${nbL().length}）</button><button class="s" id="hr">能力画像与学习方案</button>`;
+app.innerHTML=`<h1>${esc(S.profile.name)}，今天也慢慢来</h1><p class="m">每天只学该学的量，没做完也不会清零。</p><div class="c"><b>今日单词</b><p>待复习 <b>${d}</b> 个　新词 <b>${n}</b> 个</p><p class="m">已学 ${ks.length} 个，较牢固 ${mas} 个</p><button class="p" id="hw" ${d+n?'':'disabled'}>${d+n?'开始学习':'今天的任务做完了'}</button></div><button class="s" id="hn">生词本（${nbL().length}）</button><button class="s" id="hr">能力画像与学习方案</button><button class="s" id="sn">答题音效：${S.profile.sound===false?'关':'开'}</button>`;$('#sn').onclick=()=>{S.profile.sound=S.profile.sound===false;save();home()};
 $('#hw').onclick=startW;$('#hn').onclick=notebook;$('#hr').onclick=report}
 function startW(){const D=dueL().slice(0,40),N=newL().slice(0,nCount());WC=N;WQ=[...D,...N];SS={n:0,ok:0,bad:[]};WI=0;if(N.length)return wcard(0);wquiz()}
 function wcard(i){if(i>=WC.length){WI=0;return wquiz()}const w=WC[i],x=wd(w),f=WD.fav.includes(w);
@@ -191,7 +193,7 @@ const fin=v=>wgrade(w,t,v);document.querySelectorAll('.o').forEach(b=>b.onclick=
 function wgrade(w,t,v){const x=wd(w),ans=t=='m'?x[1]:w,idk=v===null,ok=!idk&&String(v).toLowerCase()==ans.toLowerCase();
 let r=WD.m[w];if(!r){r=WD.m[w]={st:0,wr:0,seen:0,due:0};if(WD.day.d!=td())WD.day={d:td(),n:0};WD.day.n++}
 r.seen++;if(ok){r.st=Math.min(6,r.st+1);r.due=Date.now()+IV[r.st]*DAY*(r.wr>=2?.6:1);r.rt=0}else{r.wr++;r.st=Math.max(0,r.st-(idk?1:2));r.due=Date.now()+6e5;if(!r.rt){WQ.push(w);r.rt=1}}
-SS.n++;if(ok)SS.ok++;else SS.bad.push(w);sv();
+sfx(ok);SS.n++;if(ok)SS.ok++;else SS.bad.push(w);sv();
 app.innerHTML=`<div class="c"><b class="${ok?'g':'w'}">${ok?'✓ 答对了':idk?'没关系，记一下':'✗ 不对'}</b><div class="q"><b>${esc(w)}</b> <span class="m">${esc(x[0]||'')}</span><br>${esc(x[1])}</div>${spk(w)}${ok?'':`<p class="m">${t=='s'&&!idk?'你写的：'+esc(v)+'。':''}这个词稍后会再出现。</p>`}</div><button class="p" id="nx">继续</button>`;$('#nx').onclick=()=>{WI++;wquiz()}}
 function wdone(){WQ.forEach(w=>{if(WD.m[w])WD.m[w].rt=0});sv();const b=[...new Set(SS.bad)];
 app.innerHTML=`<h1>今天的单词完成了</h1><p>共作答 ${SS.n} 次，答对 ${SS.ok} 次。</p>${b.length?'<p class="m">需要多看几遍的词</p>'+b.map(w=>`<span class="t">${esc(w)}</span>`).join(''):'<p class="m">全部答对，很好。</p>'}<p class="m">答错的词很快会再出现，答对的词间隔会越来越长。</p><button class="p" id="hm">回到首页</button>`;$('#hm').onclick=home}
