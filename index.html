@@ -19,7 +19,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .t{display:inline-block;padding:2px 10px;border-radius:12px;background:var(--sky);border:1px solid var(--line);font-size:13px;margin:3px 4px 3px 0}.w{color:var(--no)}.g{color:var(--teal)}
 .wd{border-bottom:1.5px dotted var(--teal)}.nv{display:flex;justify-content:space-between;gap:8px;margin:0 0 12px}.g2{padding:7px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}.g2:disabled{opacity:.4}#sh{position:fixed;left:0;right:0;bottom:0;max-height:55vh;overflow:auto;background:var(--card);border-top:1px solid var(--line);padding:14px 18px max(16px,env(safe-area-inset-bottom));z-index:9;box-shadow:0 -4px 16px rgba(0,0,0,.18)}#sh input{width:auto;flex:1}
 .nb{display:inline-block;width:42px;height:42px;line-height:40px;text-align:center;border-radius:10px;border:1.5px solid var(--line);margin:4px 6px 4px 0;background:var(--card);color:inherit;font:inherit;padding:0}.nb.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}.nb.cur{border:2.5px solid var(--teal)}.p:disabled{opacity:.45}
-</style></head><body><main id="app">加载中…</main>
+#xb{position:sticky;top:0;z-index:5;background:var(--sky);padding:4px 0 8px;max-width:480px;margin:0 auto}
+</style></head><body><div id="xb" hidden><button class="g2" id="xbtn">✕ 退出</button></div><main id="app">加载中…</main>
 <script src="dict.js"></script>
 <script>
 const P=['v','g','s','r','t','w'],NM={v:'词汇',g:'基础语法',s:'句子理解',r:'阅读理解',t:'翻译',w:'写作'},PERS={v:8,g:8,s:8,r:6,t:4,w:1},LV=['起步','入门','基础','进阶','中级','较高'];
@@ -63,7 +64,7 @@ const get=k=>new Promise(r=>{try{const q=db.transaction('kv').objectStore('kv').
 const put=(k,v)=>new Promise(r=>{try{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>r(true);t.onerror=()=>r(false)}catch(e){r(false)}});
 const save=async()=>{const ok=await put('profile',S.profile)&&await put('sess',S.sess);if(!ok)alert('保存失败：浏览器存储不可用，进度可能丢失。')};
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-function welcome(){app.innerHTML=`<h1>先了解你的英语现状</h1><p class="m">接下来是一次英语水平测评，共 6 部分，约 15 分钟，可以分多次完成。测评期间不显示对错，不会就点“不知道”，不要猜，这样结果才准。</p>
+function welcome(){app.innerHTML=`<i id="wl0" hidden></i><h1>先了解你的英语现状</h1><p class="m">接下来是一次英语水平测评，共 6 部分，约 15 分钟，可以分多次完成。测评期间不显示对错，不会就点“不知道”，不要猜，这样结果才准。</p>
 <h2>你的称呼</h2><input id="nm" maxlength="12" placeholder="想让我怎么称呼你">
 <h2>MBTI（选填）</h2><input id="mb" maxlength="4" placeholder="例如 INFP，不填也可以">
 <h2>每天能学多久</h2><select id="mn"><option>20</option><option selected>30</option><option>45</option><option>60</option></select>
@@ -80,7 +81,7 @@ if(x[3]){const o=[...x[3]].sort(()=>Math.random()-.5);h+=o.map(t=>`<button class
 h+=`<button class="s" id="dk">不知道</button><p class="m">进度已自动保存，可以随时退出，下次继续。</p>`;app.innerHTML=h;
 $('#pv').onclick=()=>review(S.sess.asked.length-1,quiz);$('#ct').onclick=()=>cardScreen(quiz);if($('#lk'))$('#lk').onclick=()=>sheet();const fin=v=>ans(p,i,v);document.querySelectorAll('.o').forEach(b=>b.onclick=()=>fin(b.dataset.v));$('#dk').onclick=()=>fin(null);
 if($('#ok'))$('#ok').onclick=()=>{const v=$('#ty').value.trim();v?fin(v):fin(null)}}
-async function ans(p,i,v){const x=B[p][i],idk=v===null;let ok=false,tier=0;if(!idk){if(x[1]=='t'){ok=x[4].filter(k=>k.some(w=>v.toLowerCase().includes(w))).length/x[4].length>=.6}else if(x[1]=='w'){const wc=(v.match(/[A-Za-z']+/g)||[]).length,sn=(v.match(/[.!?]/g)||[]).length;tier=wc<5?1:(wc<15||sn<2)?2:3;if(!/^[A-Z]/.test(v.trim())&&tier>1)tier--;ok=tier>=2}else ok=v.toLowerCase()==x[4].toLowerCase()}
+async function ans(p,i,v){const x=B[p][i],idk=v===null;let ok=false,tier=0;if(!idk){if(x[1]=='t'){ok=x[4].filter(k=>k.some(w=>v.toLowerCase().includes(w))).length/x[4].length>=.75}else if(x[1]=='w'){const wc=(v.match(/[A-Za-z']+/g)||[]).length,sn=(v.match(/[.!?]/g)||[]).length;tier=wc<5?1:(wc<15||sn<2)?2:3;if(!/^[A-Z]/.test(v.trim())&&tier>1)tier--;ok=tier>=2}else ok=v.toLowerCase()==x[4].toLowerCase()}
 S.sess.asked.push({p,i:p+i,l:x[0],t:x[1],k:x[5],ok,idk,tier,a:v});
 if(ok){S.sess.streak++;if(S.sess.streak>=2){S.sess.level=Math.min(5,S.sess.level+1);S.sess.streak=0}}else{S.sess.level=Math.max(1,S.sess.level-1);S.sess.streak=0}
 await save();quiz()}
@@ -176,7 +177,7 @@ const lk=(S.profile.lookups||[]).map(x=>{const r=find(x.w);return r&&r.w}).filte
 function nCount(){const d=dueL().length,nw=S.profile.plan?S.profile.plan.nw:10,n=d>20?Math.max(0,nw-Math.ceil((d-20)/2)):nw,dd=WD.day.d==td()?WD.day.n:0;return Math.max(0,n-dd)}
 function nbL(){return[...new Set([...WD.fav,...(S.profile.lookups||[]).map(x=>{const r=find(x.w);return r?r.w:x.w.toLowerCase()}),...Object.keys(WD.m).filter(w=>WD.m[w].wr>=3)])]}
 function home(){const d=dueL().length,n=Math.min(nCount(),newL().length),m=WD.m,ks=Object.keys(m),mas=ks.filter(w=>m[w].st>=4).length;
-app.innerHTML=`<h1>${esc(S.profile.name)}，今天也慢慢来</h1><p class="m">每天只学该学的量，没做完也不会清零。</p><div class="c"><b>今日单词</b><p>待复习 <b>${d}</b> 个　新词 <b>${n}</b> 个</p><p class="m">已学 ${ks.length} 个，较牢固 ${mas} 个</p><button class="p" id="hw" ${d+n?'':'disabled'}>${d+n?'开始学习':'今天的任务做完了'}</button></div><div class="c"><b>阅读、翻译、写作</b><p class="m">${trRec()}</p><button class="p" id="ht">进入训练</button></div><div class="c"><b>语法课堂</b><p class="m">${gRec()}</p><button class="p" id="hg">进入语法课堂</button></div><button class="s" id="hn">生词本（${nbL().length}）</button><button class="s" id="hr">能力画像与学习方案</button><button class="s" id="sn">答题音效：${S.profile.sound===false?'关':'开'}</button>`;$('#sn').onclick=()=>{S.profile.sound=S.profile.sound===false;save();home()};
+app.innerHTML=`<i id="hm0" hidden></i><h1>${esc(S.profile.name)}，今天也慢慢来</h1><p class="m">每天只学该学的量，没做完也不会清零。</p><div class="c"><b>今日单词</b><p>待复习 <b>${d}</b> 个　新词 <b>${n}</b> 个</p><p class="m">已学 ${ks.length} 个，较牢固 ${mas} 个</p><button class="p" id="hw" ${d+n?'':'disabled'}>${d+n?'开始学习':'今天的任务做完了'}</button></div><div class="c"><b>阅读、翻译、写作</b><p class="m">${trRec()}</p><button class="p" id="ht">进入训练</button></div><div class="c"><b>语法课堂</b><p class="m">${gRec()}</p><button class="p" id="hg">进入语法课堂</button></div><button class="s" id="hn">生词本（${nbL().length}）</button><button class="s" id="hr">能力画像与学习方案</button><button class="s" id="sn">答题音效：${S.profile.sound===false?'关':'开'}</button>`;$('#sn').onclick=()=>{S.profile.sound=S.profile.sound===false;save();home()};
 $('#hw').onclick=startW;$('#hn').onclick=notebook;$('#hg').onclick=gHome;$('#ht').onclick=trHome;$('#hr').onclick=report}
 function startW(){const D=dueL().slice(0,40),N=newL().slice(0,nCount());WC=N;WQ=[...D,...N];SS={n:0,ok:0,bad:[]};WI=0;if(N.length)return wcard(0);wquiz()}
 function wcard(i){if(i>=WC.length){WI=0;return wquiz()}const w=WC[i],x=wd(w),f=WD.fav.includes(w);
@@ -293,12 +294,55 @@ q:[["What do many students believe?",["More study time means better grades.","Sl
 ["The word “However” in sentence 2 shows ___.",["a contrast","a result","an example"],0,["前面说熬夜学习，后面说睡眠同样重要，意思相反，所以是转折。","表示结果的是 Therefore。","后面没有举例子。"]],
 ["What is the main idea of the passage?",["Enough sleep helps students learn better.","Students should study all night.","The brain needs no rest."],0,["全文都在说明睡眠对学习的好处，这就是主旨。","这是文章批评的做法。","与文章内容相反。"]]]}];
 const TR=[
-["en","My father works in a hospital.","我父亲在一家医院工作。",[["父亲","爸爸"],["医院"],["工作"]],"works 是一般现在时，表示经常性的工作。"],
-["zh","我们每天都练习英语。","We practice English every day.",[["we"],["practice","practise","study"],["english"],["every day","daily"]],"每天都做的事，用一般现在时，主语 We 用动词原形。"],
-["en","If you study hard, you will pass the exam.","如果你努力学习，你就会通过考试。",[["如果","假如","要是"],["努力","用功","认真"],["通过"],["考试"]],"if 从句用一般现在时，主句用 will 表示将来的结果。"],
-["zh","他昨天没有来学校，因为他生病了。","He didn't come to school yesterday because he was ill.",[["he"],["didn't","did not"],["yesterday"],["because"],["ill","sick"]],"昨天的事用一般过去时；didn't 后面动词用原形 come。"],
-["en","The book that I borrowed from the library is very interesting.","我从图书馆借的那本书很有趣。",[["书"],["图书馆"],["借"],["有趣","有意思"]],"that I borrowed from the library 是定语从句，修饰 The book，翻译时先译从句再译 book。"],
-["zh","学习新知识可以让我们的生活更丰富。","Learning new things can make our lives richer.",[["learn"],["new"],["can"],["life","lives"],["rich","better","fuller"]],"“学习新知识”可以用动名词 Learning new things 做主语；make + 宾语 + 形容词 是“使……变得……”。"]];
+["en","My father works in a hospital.","我父亲在一家医院工作。",[
+["m",/父亲|爸爸|爸/,"没有翻出 My father（我父亲/我爸爸）。","主语“我父亲”翻对了。"],
+["m",/医院/,"没有翻出 hospital（医院）。","“医院”翻对了。"],
+["m",/工作|上班|就职|任职/,"没有翻出 works（工作）。","动词“工作”翻对了。"],
+["m",/在.{0,4}医院/,"in a hospital 表示工作的地点，要译成“在一家医院（工作）”，你的译文里没有表示地点的“在”。","地点“在医院”表达清楚。"]],
+"works 是一般现在时，表示经常性的工作；in a hospital 是地点状语。"],
+["zh","我们每天都练习英语。","We practice English every day.",[
+["m",/\bwe\b/i,"主语“我们”应该写成 We。","主语 We 写对了。"],
+["m",/\b(practice|practise|study|learn)\b/i,"没有表示“练习”的动词（practice 或 study）。","动词“练习”表达对了。"],
+["m",/\benglish\b/i,"没有写 English（英语），注意首字母要大写。","English 写对了。"],
+["m",/every ?day|daily/i,"没有表示“每天”的 every day。","“每天”表达对了。"],
+["b",/\bwe (practices|studies|learns)\b/i,"主语是 We（复数），动词不加 -s。",""]],
+"每天都做的事用一般现在时，主语 We 后面动词用原形。"],
+["en","If you study hard, you will pass the exam.","如果你努力学习，你就会通过考试。",[
+["m",/如果|假如|要是|倘若/,"没有翻出 If（如果），这是一个条件句。","条件“如果”翻对了。"],
+["m",/努力|用功|刻苦|认真|好好/,"没有翻出 study hard（努力学习）。","“努力学习”翻对了。"],
+["m",/通过|考过|及格|考上|合格/,"没有翻出 pass（通过）。","“通过”翻对了。"],
+["m",/考试/,"没有翻出 the exam（考试）。","“考试”翻对了。"],
+["m",/就|会|将|能/,"没有体现 will 表示的结果（……就会……）。","表示结果的“就会”翻出来了。"]],
+"if 从句用一般现在时，主句用 will 表示将来的结果。"],
+["zh","他昨天没有来学校，因为他生病了。","He didn't come to school yesterday because he was ill.",[
+["m",/\bhe\b/i,"主语“他”应该写成 He。","主语 He 写对了。"],
+["m",/did(n'?t| not)\b/i,"“没有来”说的是过去的事，否定要用 didn't（或 did not）加动词原形，你的句子没有用 did 表示过去。","过去的否定 didn't 用对了。"],
+["m",/\b(come|go|attend)\b/i,"没有表示“来学校”的动词（come to school）。","动词“来学校”表达对了。"],
+["m",/yesterday/i,"没有翻出“昨天”：yesterday。","“昨天”翻出来了。"],
+["m",/because/i,"没有表示原因的 because。","because 用对了。"],
+["m",/\b(was|were|is|am|are) (ill|sick)\b|\b(fell|got) (ill|sick)\b/i,"“生病了”要用 be 动词加形容词：he was ill / he was sick（过去的事用 was）。","“生病了”表达对了。"],
+["b",/\b(not|no) (go|come)\b/i,"否定句不能直接用 not 加动词，要借助 do/does/did，例如 didn't come。",""],
+["b",/\bhave (ill|sick)\b/i,"have 表示“有、拥有”，不能和 sick 搭配，应该是 was sick / was ill。",""],
+["b",/\b(go|come|went|came) school\b/i,"go / come 后面接地点前要加 to：come to school。",""],
+["b",/did(n'?t| not) (came|went|goes|comes)\b/i,"didn't 后面的动词要用原形，不能再用过去式。",""]],
+"昨天的事用一般过去时；didn't 后面动词用原形 come。"],
+["en","The book that I borrowed from the library is very interesting.","我从图书馆借的那本书很有趣。",[
+["m",/书/,"没有翻出 The book（书）。","“书”翻出来了。"],
+["m",/图书馆/,"没有翻出 library（图书馆）。","“图书馆”翻出来了。"],
+["m",/有趣|有意思|好看|精彩/,"没有翻出 very interesting（很有趣）。","“有趣”翻出来了。"],
+["m",/借的[^，。]{0,3}书/,"that I borrowed from the library 是修饰 The book 的定语从句，要译成“我借的（那本）书”，把“借的”放在“书”前面。你的译文里“借”变成了谓语，结构弄反了。","定语从句“我借的书”翻对了。"],
+["m",/书(很|非常|真|十分|特别)?(有趣|有意思|好看|精彩)/,"“很有趣”才是整句话的谓语（书很有趣）。你把“有趣”放在了“书”前面当修饰语，整句的意思变了。","主句“书很有趣”翻对了。"]],
+"that I borrowed from the library 是定语从句，修饰 The book，翻译时先译从句再译 book；is very interesting 是整句的谓语。"],
+["zh","学习新知识可以让我们的生活更丰富。","Learning new things can make our lives richer.",[
+["m",/\b(learn|learning|study|studying)\b/i,"没有表示“学习”的动词（learn / study）。","“学习”翻出来了。"],
+["m",/new (things|knowledge|skills|ideas)|something new|knowledge/i,"“新知识”应该译成 new things 或 new knowledge，你的译文里没有这个意思。","“新知识”翻对了。"],
+["m",/\b(can|may|could)\b/i,"没有表示“可以”的 can。","“可以”翻出来了。"],
+["m",/\bmake\b|\bmakes\b|\bmade\b/i,"“让……更……”要用 make + 宾语 + 形容词，例如 make our lives richer。","make 的用法对了。"],
+["m",/\b(rich|richer|fuller|better|more (colorful|colourful|meaningful|wonderful))\b/i,"没有表示“更丰富”的比较级，例如 richer / fuller。","“更丰富”翻出来了。"],
+["b",/^(learn|study) /i,"动词放在句首当主语时要用 -ing 形式（Learning / Studying），不能直接用原形。",""],
+["b",/technolog/i,"“新知识”不是 technology（技术），意思变了。",""],
+["b",/let'?s|\blet\b/i,"let's 是 let us 的缩写，意思是“让我们（一起……）”，不能表示“使……变得……”，要用 make。",""]],
+"“学习新知识”可以用动名词 Learning new things 做主语；make + 宾语 + 形容词 是“使……变得……”。"]];
 const WR=[
 {id:'w1',t:"介绍你的一天",min:30,tip:"3 到 4 句话。可以用：In the morning, I ... After school, I ... At night, I ...",
 sample:"In the morning, I get up at seven and eat breakfast. Then I go to school by bus. After school, I do my homework and read some books. At night, I go to bed at ten."},
@@ -325,10 +369,16 @@ app.innerHTML=`<p class="m">逐句精读 · ${p.t} · ${k+1} / ${p.s.length}</p>
 $('#sz').onclick=()=>{$('#zh').innerHTML+=`<div class="c"><b>中文</b><p>${esc(x[1])}</p></div>`};$('#sn2').onclick=()=>{$('#zh').innerHTML+=`<div class="c"><b>结构与语法</b><p>${esc(x[2])}</p></div>`};$('#pv').onclick=()=>rint(i,k-1,back);$('#xt').onclick=()=>k==p.s.length-1?back():rint(i,k+1,back)}
 function tHome(){const d=TRI();app.innerHTML=`<div class="nv"><button class="g2" id="bk">‹ 返回</button></div><h1>翻译训练</h1>`+TR.map((x,i)=>`<button class="o" data-i="${i}"><span class="t">${x[0]=='en'?'英译中':'中译英'}</span> ${esc(x[1])}${d[i]?' <span class="t">已做</span>':''}</button>`).join('');
 $('#bk').onclick=trHome;document.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>tdo(+b.dataset.i))}
-function tdo(i){const x=TR[i];CP='t';app.innerHTML=`<div class="nv"><button class="g2" id="bk">‹ 题目列表</button></div><p class="m">${x[0]=='en'?'把下面的句子翻译成中文':'把下面的句子翻译成英文'}</p><div class="q">${x[0]=='en'?W(x[1]):esc(x[1])}</div><textarea id="ty" rows="4" placeholder="写下你的翻译，不会就点“不知道”" style="width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:inherit;font:inherit"></textarea><button class="p" id="ok">提交</button><button class="s" id="dk">不知道</button>`;
-$('#bk').onclick=tHome;const fin=v=>{const t=(v||'').toLowerCase().replace(/[’‘]/g,"'"),ks=x[3],miss=ks.filter(k=>!k.some(w=>t.includes(w))),hit=ks.length-miss.length,ok=!!v&&hit/ks.length>=.6;sfx(ok);
-TRI()[i]={hit,n:ks.length,t:Date.now()};if(!ok){const M=WD.mis=WD.mis||[];M.push({l:'翻译',q:x[1],my:v||'（不知道）',ans:x[2],why:v?'没有覆盖这些意思：'+miss.map(k=>k[0]).join('、'):'选择了不知道',t:Date.now()});if(M.length>300)M.shift()}sv();
-app.innerHTML=`<div class="c"><b class="${ok?'g':'w'}">${v?(ok?'✓ 关键意思基本都有':'✗ 有些意思没翻出来'):'没关系，先看参考译文'}</b><p class="m">你的译文</p><p>${esc(v||'（空）')}</p><p class="m">参考译文（不是唯一答案）</p><p>${esc(x[0]=='en'?x[2]:x[2])}</p>${v&&miss.length?`<p class="w">缺少的意思：${esc(miss.map(k=>k[0]).join('、'))}</p>`:''}<p class="m">提示：${esc(x[4])}</p><p class="m">这是关键词粗判，不检查语法，参考译文才是对照标准。</p></div><button class="p" id="nx">${i<TR.length-1?'下一题':'回到列表'}</button>`;$('#nx').onclick=()=>i<TR.length-1?tdo(i+1):tHome()};
+function tdo(i,pre){const x=TR[i];CP='t';app.innerHTML=`<div class="nv"><button class="g2" id="bk">‹ 题目列表</button></div><p class="m">${x[0]=='en'?'把下面的句子翻译成中文':'把下面的句子翻译成英文'}</p><div class="q">${x[0]=='en'?W(x[1]):esc(x[1])}</div><textarea id="ty" rows="4" placeholder="写下你的翻译，不会就点“不知道”" style="width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:inherit;font:inherit">${esc(pre||'')}</textarea><button class="p" id="ok">提交</button><button class="s" id="dk">不知道</button>`;
+$('#bk').onclick=tHome;const fin=v0=>{const v=v0?v0.replace(/[’‘]/g,"'"):null,good=[],bad=[],tips=[];let mp=0,mt=0,bv=0;
+if(v){const zh=/[\u4e00-\u9fa5]/.test(v),la=/[A-Za-z]/.test(v);if(x[0]=='en'&&!zh)bad.push('这题要翻译成中文，请用中文作答。');else if(x[0]=='zh'&&!la)bad.push('这题要翻译成英文，请用英文作答。');
+else{x[3].forEach(r=>{const hit=r[1].test(v);if(r[0]=='m'){mt++;if(hit){mp++;if(r[3])good.push(r[3])}else bad.push(r[2])}else if(hit){bv++;bad.push(r[2])}});
+if(x[0]=='zh'){if(!/^[A-Z]/.test(v.trim()))tips.push('英文句子第一个字母要大写。');if(!/[.!?]$/.test(v.trim()))tips.push('句末要加标点。')}}}
+const full=!!v&&mt>0&&mp==mt&&!bv,near=!!v&&mt>0&&!full&&mp/mt>=.75&&bv<=1;sfx(full);
+TRI()[i]={mp,mt,bv,full,t:Date.now()};if(!full){const M=WD.mis=WD.mis||[];M.push({l:'翻译',q:x[1],my:v0||'（不知道）',ans:x[2],why:v?bad.join(' '):'选择了不知道',t:Date.now()});if(M.length>300)M.shift()}sv();
+const L=a=>a.map(t=>`<p>${esc(t)}</p>`).join('');
+app.innerHTML=`<div class="c"><b class="${full?'g':'w'}">${!v?'没关系，先看参考译文':full?'✓ 要点齐全，译得对':near?'△ 接近了，但还有问题要改':'✗ 还需要修改'}</b><p class="m">你的译文</p><p>${esc(v0||'（空）')}</p><p class="m">参考译文（不是唯一答案）</p><p>${esc(x[2])}</p>${good.length?`<p class="g"><b>做对的地方</b></p>${L(good)}`:''}${bad.length?`<p class="w"><b>需要修改的地方</b></p>${L(bad)}`:''}${tips.length?`<p class="m">小提醒：${esc(tips.join(''))}</p>`:''}<p class="m">提示：${esc(x[4])}</p><p class="m">这是针对本题关键点的规则分析，不是完整批改。</p></div>${v&&!full?'<button class="s" id="rt">按提示改一改再试</button>':''}<button class="p" id="nx">${i<TR.length-1?'下一题':'回到列表'}</button>`;
+if($('#rt'))$('#rt').onclick=()=>tdo(i,v0);$('#nx').onclick=()=>i<TR.length-1?tdo(i+1):tHome()};
 $('#ok').onclick=()=>fin($('#ty').value.trim()||null);$('#dk').onclick=()=>fin(null)}
 function wHome(){const d=WRI();app.innerHTML=`<div class="nv"><button class="g2" id="bk">‹ 返回</button></div><h1>写作训练</h1>`+WR.map((x,i)=>`<button class="o" data-i="${i}"><b>${esc(x.t)}</b> <span class="t">至少 ${x.min} 词</span>${d[x.id]?' <span class="t">写过</span>':''}</button>`).join('');
 $('#bk').onclick=trHome;document.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>wdo(+b.dataset.i))}
@@ -338,6 +388,11 @@ $('#ok').onclick=()=>{const t=$('#ty').value.trim(),wc=(t.match(/[A-Za-z']+/g)||
 if(!wc)adv.push('还没写内容，先试着写一句也可以。');else{if(wc<x.min)adv.push(`还差 ${x.min-wc} 个词才够 ${x.min} 词。`);else adv.push('字数够了。');if(sn<3&&x.min>=60)adv.push('句子偏少，试着把内容拆成更多完整的句子。');if(!cons.length&&x.min>=60)adv.push('可以加 2 个连接词，比如 because、however、for example。');else if(cons.length)adv.push('用到的连接词：'+cons.join('、')+'。');if(low)adv.push(`有 ${low} 句开头没有大写。`);if(/\bi\b/.test(t))adv.push('单独的 I 要大写。');if(!/[.!?]$/.test(t))adv.push('结尾没有标点。')}
 WRI()[x.id]={text:t,words:wc,t:Date.now()};sv();
 app.innerHTML=`<h1>检查结果</h1><div class="c"><b>${wc} 词 · ${sn} 句</b>${adv.map(a=>`<p>${esc(a)}</p>`).join('')}<p class="m">这是按字数、句数、连接词和大小写做的规则检查，不检查语法和内容，接入 AI 后可以详细批改。</p></div><div class="c"><b>参考范文（自编，供对照）</b><p>${esc(x.sample)}</p></div><button class="p" id="re">回去再改一改</button><button class="s" id="bk">回到题目列表</button>`;$('#re').onclick=()=>wdo(i,t);$('#bk').onclick=wHome}}
+
+function pause(){app.innerHTML='<i id="hm0" hidden></i><h1>已暂停</h1><p class="m">进度已自动保存，随时可以接着做。</p><button class="p" id="nx">继续测评</button>';$('#nx').onclick=quiz}
+if(typeof MutationObserver!=='undefined'){const xb=document.getElementById('xb'),xt=document.getElementById('xbtn');
+new MutationObserver(()=>{xb.hidden=!!(app.querySelector('#hm0,#wl0')||!S.profile||!S.sess);xt.textContent=S.sess&&!S.sess.done?'⏸ 暂停并退出':'✕ 退出练习'}).observe(app,{childList:true});
+xt.onclick=()=>{clearInterval(window.TI);const h=document.getElementById('sh');if(h)h.hidden=true;S.sess&&S.sess.done?home():pause()}}
 (async()=>{try{db=await open()}catch(e){app.innerHTML='<h1>无法使用本地存储</h1><p>你的浏览器禁用了存储功能，进度无法保存。请换用 Chrome 并关闭无痕模式。</p>';return}
 S.profile=await get('profile')||null;S.sess=await get('sess')||null;WD=await get('words')||{};WD.m=WD.m||{};WD.fav=WD.fav||[];WD.day=WD.day||{d:'',n:0};
 if(!S.profile||!S.sess)return welcome();if(S.sess.done&&S.sess.part<P.length-1){S.sess.done=false;S.sess.part++;S.sess.level=2;S.sess.streak=0;await save();return notice()}if(S.sess.done)return home();quiz()})();
