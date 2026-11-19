@@ -176,8 +176,8 @@ const lk=(S.profile.lookups||[]).map(x=>{const r=find(x.w);return r&&r.w}).filte
 function nCount(){const d=dueL().length,nw=S.profile.plan?S.profile.plan.nw:10,n=d>20?Math.max(0,nw-Math.ceil((d-20)/2)):nw,dd=WD.day.d==td()?WD.day.n:0;return Math.max(0,n-dd)}
 function nbL(){return[...new Set([...WD.fav,...(S.profile.lookups||[]).map(x=>{const r=find(x.w);return r?r.w:x.w.toLowerCase()}),...Object.keys(WD.m).filter(w=>WD.m[w].wr>=3)])]}
 function home(){const d=dueL().length,n=Math.min(nCount(),newL().length),m=WD.m,ks=Object.keys(m),mas=ks.filter(w=>m[w].st>=4).length;
-app.innerHTML=`<h1>${esc(S.profile.name)}，今天也慢慢来</h1><p class="m">每天只学该学的量，没做完也不会清零。</p><div class="c"><b>今日单词</b><p>待复习 <b>${d}</b> 个　新词 <b>${n}</b> 个</p><p class="m">已学 ${ks.length} 个，较牢固 ${mas} 个</p><button class="p" id="hw" ${d+n?'':'disabled'}>${d+n?'开始学习':'今天的任务做完了'}</button></div><button class="s" id="hn">生词本（${nbL().length}）</button><button class="s" id="hr">能力画像与学习方案</button><button class="s" id="sn">答题音效：${S.profile.sound===false?'关':'开'}</button>`;$('#sn').onclick=()=>{S.profile.sound=S.profile.sound===false;save();home()};
-$('#hw').onclick=startW;$('#hn').onclick=notebook;$('#hr').onclick=report}
+app.innerHTML=`<h1>${esc(S.profile.name)}，今天也慢慢来</h1><p class="m">每天只学该学的量，没做完也不会清零。</p><div class="c"><b>今日单词</b><p>待复习 <b>${d}</b> 个　新词 <b>${n}</b> 个</p><p class="m">已学 ${ks.length} 个，较牢固 ${mas} 个</p><button class="p" id="hw" ${d+n?'':'disabled'}>${d+n?'开始学习':'今天的任务做完了'}</button></div><div class="c"><b>语法课堂</b><p class="m">${gRec()}</p><button class="p" id="hg">进入语法课堂</button></div><button class="s" id="hn">生词本（${nbL().length}）</button><button class="s" id="hr">能力画像与学习方案</button><button class="s" id="sn">答题音效：${S.profile.sound===false?'关':'开'}</button>`;$('#sn').onclick=()=>{S.profile.sound=S.profile.sound===false;save();home()};
+$('#hw').onclick=startW;$('#hn').onclick=notebook;$('#hg').onclick=gHome;$('#hr').onclick=report}
 function startW(){const D=dueL().slice(0,40),N=newL().slice(0,nCount());WC=N;WQ=[...D,...N];SS={n:0,ok:0,bad:[]};WI=0;if(N.length)return wcard(0);wquiz()}
 function wcard(i){if(i>=WC.length){WI=0;return wquiz()}const w=WC[i],x=wd(w),f=WD.fav.includes(w);
 app.innerHTML=`<p class="m">新词 ${i+1} / ${WC.length}</p><div class="bar"><i style="width:${i/WC.length*100}%"></i></div><div class="c" style="text-align:center"><div style="font-size:34px;font-weight:700">${esc(w)}</div><p class="m">${esc(x[0]||'')}</p><div style="font-size:20px">${esc(x[1])}</div><p class="m">暂时没有例句，之后补充。</p></div><div class="nv">${spk(w)}<button class="g2" id="fv">${f?'已在生词本':'加入生词本'}</button></div><button class="p" id="nx">下一个</button>`;
@@ -202,6 +202,65 @@ $('#bk').onclick=home;document.querySelectorAll('[data-rm]').forEach(b=>b.onclic
 function cardScreen(back){const A=S.sess.asked;let h='<h1>答题卡</h1><p class="m">深色是已做的题，点一下可以回看（只读）。</p>';
 P.forEach(p=>{const ix=A.map((a,i)=>a.p==p?i:-1).filter(i=>i>=0);h+=`<h2>${NM[p]}</h2><div>`;for(let n=0;n<PERS[p];n++)h+=ix[n]!==undefined?`<button class="nb on" data-k="${ix[n]}">${n+1}</button>`:`<span class="nb${!S.sess.done&&P[S.sess.part]==p&&n==ix.length?' cur':''}">${n+1}</span>`;h+='</div>'});
 h+='<button class="p" id="bk">'+(S.sess.done?'返回':'回到答题')+'</button>';app.innerHTML=h;document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>review(+b.dataset.k,()=>cardScreen(back)));$('#bk').onclick=back}
+
+const GR=[
+{id:'g1',t:"词类：名词、动词、形容词、副词",goal:"能认出句子里的名词、动词、形容词、副词。",
+st:[["名词：人、事物、地点的名字","teacher（老师）、book（书）、school（学校）都是名词。看到能说“这是一个什么东西或什么人”的词，多半是名词。"],
+["动词：表示动作或状态","run（跑）、eat（吃）、be（是）是动词。一句话里通常至少有一个动词，它是句子的核心。"],
+["形容词：说明名词是什么样","big（大的）、happy（高兴的）是形容词，常放在名词前面：a big dog（一只大狗）。"],
+["副词：说明动作是怎样的","quickly（快地）、always（总是）是副词，常修饰动词：She runs quickly.（她跑得很快）。"],
+["放在一起看","My friend eats noodles happily. My friend 和 noodles 是名词，eats 是动词，happily 是副词。"],
+["常见错误","修饰名词用形容词，修饰动词用副词。不说 She sings beautiful，要说 She sings beautifully。"]],
+alt:"把句子想成一幅画：名词是画里的人和物，动词是他们在做什么，形容词给人和物涂颜色，副词说明动作是快还是慢。",
+ex:[["在 “The small cat sleeps.” 里，哪个词是形容词？",["small","cat","sleeps"],0,["small 描述名词 cat 的样子，是形容词。","cat 是动物的名字，是名词。","sleeps 表示动作，是动词。"]],
+["She runs ___.",["quick","quickly","happy"],1,["quickly 是副词，修饰动词 runs，所以对。","quick 是形容词，只能修饰名词，不能修饰动词 runs。","happy 也是形容词，同样不能修饰动词。"]],
+["下面哪个词是名词？",["run","school","happy"],1,["run 表示动作，是动词。","school（学校）是地点的名字，是名词。","happy 描述状态或感受，是形容词。"]]],
+sum:"名词是人、物、地点；动词是动作或状态；形容词修饰名词；副词常修饰动词。"},
+{id:'g2',t:"主语、谓语、宾语",goal:"能在简单句里找出主语、谓语和宾语。",
+st:[["主语：句子在说“谁”或“什么”","Tom plays football. 句子在说 Tom，所以 Tom 是主语，通常在句首。"],
+["谓语：主语做了什么","plays 说明 Tom 做了什么，所以 plays 是谓语，一般由动词担任。"],
+["宾语：动作的承受者","football 是 plays 这个动作作用的对象，回答“玩什么”，所以是宾语。结构叫主谓宾：主语 + 谓语 + 宾语。"],
+["生活化例子","I drink water every day. I 是主语，drink 是谓语，water 是宾语。"],
+["常见错误","不是每句话都有宾语。She sleeps.（她睡觉）只有主语和谓语，因为 sleep 后面不需要对象。"]],
+alt:"按顺序问自己三个问题：谁在做？（主语）做什么动作？（谓语）对什么做？（宾语）。问完就拆好了。",
+ex:[["在 “My sister reads a book.” 里，宾语是？",["My sister","reads","a book"],2,["My sister 是做动作的人，是主语。","reads 是动作，是谓语。","a book 是 reads 的对象，回答“读什么”，是宾语。"]],
+["在 “The dog barks.” 里，谓语是？",["The dog","barks","这句话没有谓语"],1,["The dog 是主语，不是谓语。","barks（叫）是动作，是谓语。","每个完整的句子都有谓语，这里就是 barks。"]],
+["哪一句没有宾语？",["I like music.","Birds fly.","We eat rice."],1,["like 后面的 music 是宾语。","fly 后面没有承受动作的对象，所以没有宾语。","eat 后面的 rice 是宾语。"]]],
+sum:"主语是“谁”，谓语是“做什么”，宾语是“对什么做”；有些句子可以没有宾语。"},
+{id:'g3',t:"be 动词：am / is / are",goal:"会用 am、is、are 造简单的句子，并能变否定句和疑问句。",
+st:[["be 动词表示“是”或“在”","I am a student.（我是学生）She is happy.（她很开心）They are friends.（他们是朋友）。"],
+["形式要跟着主语变","I 用 am；he、she、it 和单数名词用 is；you、we、they 和复数名词用 are。"],
+["否定句和疑问句","否定：在 be 后面加 not：She is not happy. 疑问：把 be 提到句首：Is she happy?"],
+["常见错误","不说 I is，要说 I am。也不要在 be 后面再放实义动词：不说 She is like apples，要说 She likes apples。"]],
+alt:"把 am/is/are 想成一个“=”号：I = a student，she = happy。等号两边要对得上。",
+ex:[["My brother ___ a doctor.",["am","is","are"],1,["am 只能和 I 连用。","My brother 是单数（相当于 he），用 is。","are 用于 you、we、they 或复数名词。"]],
+["We ___ in the classroom.",["am","is","are"],2,["am 只能和 I 连用。","is 用于单数，We 是复数。","We 是复数，用 are。"]],
+["把 “He is tall.” 变成一般疑问句：",["Is he tall?","Does he tall?","He is tall?"],0,["be 动词的疑问句，把 is 提到句首，所以对。","tall 是形容词，句子里的动词是 is，不能用 does。","只加问号没有调整词序，不是一般疑问句的标准结构。"]]],
+sum:"I 用 am，he/she/it 和单数用 is，you/we/they 和复数用 are；否定加 not，疑问把 be 提前。"},
+{id:'g4',t:"一般现在时",goal:"会用一般现在时说习惯和事实，注意第三人称单数加 -s。",
+st:[["什么时候用","说经常做的事和一直成立的事实，常见时间词：every day、always、usually。"],
+["动词怎么变","主语是 I、you、we、they 时用动词原形：I play football. 主语是 he、she、it 或单数名词时，动词加 -s：He plays football."],
+["加 -s 的小规则","以 s、x、ch、sh、o 结尾加 -es：watch→watches，go→goes。辅音字母加 y 结尾，变 y 为 ies：study→studies。"],
+["否定和疑问","用 do / does 帮忙：I don't like tea. Does she like tea? 注意，用了 does 以后，动词回到原形 like。"],
+["常见错误","She doesn't likes tea. 是错的。does 已经带了 -s，动词就不用再加：She doesn't like tea."]],
+alt:"把 he、she、it 想成需要给动词“穿一件 -s 外套”的主语。但只要句子里有 does 帮忙，动词就把外套脱掉，回到原形。",
+ex:[["My mother ___ to work by bus every day.",["go","goes","going"],1,["go 是原形，主语是单数第三人称，需要加 -es。","My mother 相当于 she，go 要加 -es 变成 goes。","going 是 -ing 形式，不能单独做这句的谓语。"]],
+["They ___ English every morning.",["study","studies","studying"],0,["They 是复数，用动词原形 study。","studies 是单数第三人称的形式，主语是 They 不能用。","studying 不能单独做谓语。"]],
+["She doesn't ___ milk.",["like","likes","liking"],0,["doesn't 后面动词要用原形，所以用 like。","doesn't 里的 does 已经带了第三人称变化，动词不能再加 -s。","doesn't 后面不能接 -ing 形式。"]]],
+sum:"he/she/it 和单数用动词加 -s/-es；I/you/we/they 用原形；否定和疑问用 do/does，后面动词回到原形。"}];
+const G=()=>WD.g=WD.g||{};
+function gRec(){const g=G(),n=Date.now(),d=GR.filter(l=>g[l.id]&&g[l.id].due<=n);if(d.length)return`有 ${d.length} 节课该复习了`;const x=GR.find(l=>!g[l.id]||!g[l.id].done);return x?`建议从「${x.t}」开始`:'这几节都掌握了，更多课程在准备中'}
+function gHome(){const g=G(),n=Date.now();app.innerHTML=`<div class="nv"><button class="g2" id="bk">‹ 返回</button></div><h1>语法课堂</h1><p class="m">每节课先讲一点点，再用 3 道题检验。听不懂点“换个讲法”，已经会的课可以直接练习。</p>`+GR.map((l,i)=>{const r=g[l.id],tag=!r?'未学':r.due<=n?'该复习':r.done?'掌握':'需再练';return`<button class="o" data-i="${i}"><b>${i+1}. ${esc(l.t)}</b><br><span class="m">${esc(l.goal)}</span> <span class="t">${tag}</span></button>`}).join('')+'<p class="m">更多课程（时态、从句等）会陆续开放。</p>';
+$('#bk').onclick=home;document.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>glesson(+b.dataset.i,0))}
+function glesson(i,s){const l=GR[i],h=l.st[s][0],b=l.st[s][1],last=s==l.st.length-1;
+app.innerHTML=`<div class="nv"><button class="g2" id="bk">‹ 课程列表</button></div><p class="m">${esc(l.t)} · ${s+1} / ${l.st.length}</p><div class="bar"><i style="width:${(s+1)/l.st.length*100}%"></i></div>${s==0?`<div class="c"><b>本节目标</b><br>${esc(l.goal)}</div>`:''}<div class="c"><b>${esc(h)}</b><p>${esc(b)}</p></div><div id="al"></div><div class="nv"><button class="g2" id="pv" ${s?'':'disabled'}>‹ 上一步</button><button class="g2" id="alt">换个讲法</button></div><button class="p" id="nx">${last?'去做练习':'下一步'}</button>${s==0?'<button class="s" id="sk">我已经会了，直接练习</button>':''}`;
+$('#bk').onclick=gHome;$('#pv').onclick=()=>glesson(i,s-1);$('#nx').onclick=()=>last?gprac(i,0,0):glesson(i,s+1);$('#alt').onclick=()=>{$('#al').innerHTML=`<div class="c"><b>换个角度</b><p>${esc(l.alt)}</p></div>`};if($('#sk'))$('#sk').onclick=()=>gprac(i,0,0)}
+function gprac(i,n,sc){const l=GR[i];if(n>=l.ex.length)return gend(i,sc);const[q,o,a,r]=l.ex[n];
+app.innerHTML=`<p class="m">练习 ${n+1} / ${l.ex.length}</p><div class="bar"><i style="width:${n/l.ex.length*100}%"></i></div><div class="q">${esc(q)}</div>`+o.map((t,k)=>`<button class="o" data-k="${k}">${esc(t)}</button>`).join('');
+document.querySelectorAll('.o').forEach(b=>b.onclick=()=>{const k=+b.dataset.k,ok=k==a;sfx(ok);if(!ok){const M=WD.mis=WD.mis||[];M.push({l:l.id,q,my:o[k],ans:o[a],why:r[k],t:Date.now()});if(M.length>300)M.shift();sv()}
+app.innerHTML=`<div class="c"><b class="${ok?'g':'w'}">${ok?'✓ 答对了':'✗ 不对'}</b><p>${esc(ok?r[a]:'你选的是“'+o[k]+'”：'+r[k])}</p>${ok?'':`<p>正确答案是“${esc(o[a])}”：${esc(r[a])}</p>`}</div><button class="p" id="nx">继续</button>`;$('#nx').onclick=()=>gprac(i,n+1,sc+(ok?1:0))})}
+function gend(i,sc){const l=GR[i],g=G(),N=l.ex.length,done=sc>=N-1,r=g[l.id]=g[l.id]||{n:0};r.n++;r.sc=sc;r.done=done;r.due=Date.now()+(done?3:1)*DAY;sv();
+app.innerHTML=`<h1>${done?'这一节掌握得不错':'这一节还需要巩固'}</h1><p>答对 ${sc} / ${N} 题。</p><div class="c"><b>小结</b><p>${esc(l.sum)}</p></div><p class="m">${done?'3 天后会再测一次，确认没有忘。':'明天会提醒你再练一次，答错的原因已记进错题记录。'}一次结果不代表真的掌握，之后的复习会继续检验。</p><button class="p" id="a">回到语法课堂</button><button class="s" id="b">重新看讲解</button>`;$('#a').onclick=gHome;$('#b').onclick=()=>glesson(i,0)}
 (async()=>{try{db=await open()}catch(e){app.innerHTML='<h1>无法使用本地存储</h1><p>你的浏览器禁用了存储功能，进度无法保存。请换用 Chrome 并关闭无痕模式。</p>';return}
 S.profile=await get('profile')||null;S.sess=await get('sess')||null;WD=await get('words')||{};WD.m=WD.m||{};WD.fav=WD.fav||[];WD.day=WD.day||{d:'',n:0};
 if(!S.profile||!S.sess)return welcome();if(S.sess.done&&S.sess.part<P.length-1){S.sess.done=false;S.sess.part++;S.sess.level=2;S.sess.streak=0;await save();return notice()}if(S.sess.done)return home();quiz()})();
