@@ -177,8 +177,8 @@ const lk=(S.profile.lookups||[]).map(x=>{const r=find(x.w);return r&&r.w}).filte
 function nCount(){const d=dueL().length,nw=S.profile.plan?S.profile.plan.nw:10,n=d>20?Math.max(0,nw-Math.ceil((d-20)/2)):nw,dd=WD.day.d==td()?WD.day.n:0;return Math.max(0,n-dd)}
 function nbL(){return[...new Set([...WD.fav,...(S.profile.lookups||[]).map(x=>{const r=find(x.w);return r?r.w:x.w.toLowerCase()}),...Object.keys(WD.m).filter(w=>WD.m[w].wr>=3)])]}
 function home(){const d=dueL().length,n=Math.min(nCount(),newL().length),m=WD.m,ks=Object.keys(m),mas=ks.filter(w=>m[w].st>=4).length;
-app.innerHTML=`<i id="hm0" hidden></i><h1>${esc(S.profile.name)}，今天也慢慢来</h1><p class="m">每天只学该学的量，没做完也不会清零。</p><div class="c"><b>今日单词</b><p>待复习 <b>${d}</b> 个　新词 <b>${n}</b> 个</p><p class="m">已学 ${ks.length} 个，较牢固 ${mas} 个</p><button class="p" id="hw" ${d+n?'':'disabled'}>${d+n?'开始学习':'今天的任务做完了'}</button></div><div class="c"><b>阅读、翻译、写作</b><p class="m">${trRec()}</p><button class="p" id="ht">进入训练</button></div><div class="c"><b>语法课堂</b><p class="m">${gRec()}</p><button class="p" id="hg">进入语法课堂</button></div><button class="s" id="hn">生词本（${nbL().length}）</button><button class="s" id="hr">能力画像与学习方案</button><button class="s" id="sn">答题音效：${S.profile.sound===false?'关':'开'}</button>`;$('#sn').onclick=()=>{S.profile.sound=S.profile.sound===false;save();home()};
-$('#hw').onclick=startW;$('#hn').onclick=notebook;$('#hg').onclick=gHome;$('#ht').onclick=trHome;$('#hr').onclick=report}
+app.innerHTML=`<i id="hm0" hidden></i><h1>${esc(S.profile.name)}，今天也慢慢来</h1><p class="m">每天只学该学的量，没做完也不会清零。</p><div class="c"><b>今日单词</b><p>待复习 <b>${d}</b> 个　新词 <b>${n}</b> 个</p><p class="m">已学 ${ks.length} 个，较牢固 ${mas} 个</p><button class="p" id="hw" ${d+n?'':'disabled'}>${d+n?'开始学习':'今天的任务做完了'}</button></div><div class="c"><b>阅读、翻译、写作</b><p class="m">${trRec()}</p><button class="p" id="ht">进入训练</button></div><div class="c"><b>语法课堂</b><p class="m">${gRec()}</p><button class="p" id="hg">进入语法课堂</button></div><button class="s" id="hm2">错题本（待复习 ${mbDue().length}）</button><button class="s" id="hn">生词本（${nbL().length}）</button><button class="s" id="hr">能力画像与学习方案</button><button class="s" id="sn">答题音效：${S.profile.sound===false?'关':'开'}</button>`;$('#sn').onclick=()=>{S.profile.sound=S.profile.sound===false;save();home()};
+$('#hw').onclick=startW;$('#hn').onclick=notebook;$('#hm2').onclick=()=>mbHome({});$('#hg').onclick=gHome;$('#ht').onclick=trHome;$('#hr').onclick=report}
 function startW(){const D=dueL().slice(0,40),N=newL().slice(0,nCount());WC=N;WQ=[...D,...N];SS={n:0,ok:0,bad:[]};WI=0;if(N.length)return wcard(0);wquiz()}
 function wcard(i){if(i>=WC.length){WI=0;return wquiz()}const w=WC[i],x=wd(w),f=WD.fav.includes(w);
 app.innerHTML=`<p class="m">新词 ${i+1} / ${WC.length}</p><div class="bar"><i style="width:${i/WC.length*100}%"></i></div><div class="c" style="text-align:center"><div style="font-size:34px;font-weight:700">${esc(w)}</div><p class="m">${esc(x[0]||'')}</p><div style="font-size:20px">${esc(x[1])}</div><p class="m">暂时没有例句，之后补充。</p></div><div class="nv">${spk(w)}<button class="g2" id="fv">${f?'已在生词本':'加入生词本'}</button></div><button class="p" id="nx">下一个</button>`;
@@ -353,10 +353,10 @@ sample:"I agree with the saying that a friend in need is a friend indeed. A true
 const TRI=()=>(WD.tr=WD.tr||{}),RDI=()=>(WD.rd=WD.rd||{}),WRI=()=>(WD.wr=WD.wr||{});
 function trRec(){return`阅读 ${Object.keys(RDI()).length}/${RD.length} · 翻译 ${Object.keys(TRI()).length}/${TR.length} · 写作 ${Object.keys(WRI()).length}/${WR.length}`}
 function trHome(){clearInterval(window.TI);app.innerHTML=`<div class="nv"><button class="g2" id="bk">‹ 返回</button></div><h1>阅读、翻译、写作</h1><p class="m">从简单到难。翻译和写作目前是规则粗判，并对照参考答案，不是严格批改，接入 AI 后会更准。</p><button class="o" id="a"><b>阅读训练</b><br><span class="m">短文、逐句精读、查词、计时</span></button><button class="o" id="b"><b>翻译训练</b><br><span class="m">英译中、中译英，对照参考译文</span></button><button class="o" id="c"><b>写作训练</b><br><span class="m">从几句话到 80 词短文</span></button>`;$('#bk').onclick=home;$('#a').onclick=rHome;$('#b').onclick=tHome;$('#c').onclick=wHome}
-function qrun(items,n,sc,tag,done){if(n>=items.length)return done(sc);const q=items[n][0],o=items[n][1],a=items[n][2],r=items[n][3];
-app.innerHTML=`<p class="m">第 ${n+1} / ${items.length} 题</p><div class="bar"><i style="width:${n/items.length*100}%"></i></div><div class="q">${W(q)}</div>`+o.map((t,k)=>`<button class="o" data-k="${k}">${esc(t)}</button>`).join('');
+function qrun(items,n,sc,tag,done,lab){if(n>=items.length)return done(sc);const q=items[n][0],o=items[n][1],a=items[n][2],r=items[n][3];
+app.innerHTML=`<p class="m">${lab||'第 '+(n+1)+' / '+items.length+' 题'}</p><div class="bar"><i style="width:${n/items.length*100}%"></i></div><div class="q">${W(q)}</div>`+o.map((t,k)=>`<button class="o" data-k="${k}">${esc(t)}</button>`).join('');
 document.querySelectorAll('.o').forEach(b=>b.onclick=()=>{const k=+b.dataset.k,ok=k==a;sfx(ok);if(!ok){const M=WD.mis=WD.mis||[];M.push({l:tag,q,my:o[k],ans:o[a],why:r[k],t:Date.now()});if(M.length>300)M.shift();sv()}
-app.innerHTML=`<div class="c"><b class="${ok?'g':'w'}">${ok?'✓ 答对了':'✗ 不对'}</b><p>${esc(ok?r[a]:'你选的是“'+o[k]+'”：'+r[k])}</p>${ok?'':`<p>正确答案是“${esc(o[a])}”：${esc(r[a])}</p>`}</div><button class="p" id="nx">继续</button>`;$('#nx').onclick=()=>qrun(items,n+1,sc+(ok?1:0),tag,done)})}
+app.innerHTML=`<div class="c"><b class="${ok?'g':'w'}">${ok?'✓ 答对了':'✗ 不对'}</b><p>${esc(ok?r[a]:'你选的是“'+o[k]+'”：'+r[k])}</p>${ok?'':`<p>正确答案是“${esc(o[a])}”：${esc(r[a])}</p>`}</div><button class="p" id="nx">继续</button>`;$('#nx').onclick=()=>qrun(items,n+1,sc+(ok?1:0),tag,done,lab)})}
 function rHome(){clearInterval(window.TI);const d=RDI();app.innerHTML=`<div class="nv"><button class="g2" id="bk">‹ 返回</button></div><h1>阅读训练</h1>`+RD.map((p,i)=>`<button class="o" data-i="${i}"><b>${esc(p.t)}</b> <span class="t">${p.lv}</span> <span class="t">${d[p.id]?'已读 '+d[p.id].sc+'/'+p.q.length:'未读'}</span></button>`).join('')+'<p class="m">更多文章会陆续增加。</p>';
 $('#bk').onclick=trHome;document.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>rread(+b.dataset.i))}
 function rread(i){const p=RD[i];CP='r';clearInterval(window.TI);const t0=Date.now();
@@ -393,6 +393,35 @@ function pause(){app.innerHTML='<i id="hm0" hidden></i><h1>已暂停</h1><p clas
 if(typeof MutationObserver!=='undefined'){const xb=document.getElementById('xb'),xt=document.getElementById('xbtn');
 new MutationObserver(()=>{xb.hidden=!!(app.querySelector('#hm0,#wl0')||!S.profile||!S.sess);xt.textContent=S.sess&&!S.sess.done?'⏸ 暂停并退出':'✕ 退出练习'}).observe(app,{childList:true});
 xt.onclick=()=>{clearInterval(window.TI);const h=document.getElementById('sh');if(h)h.hidden=true;S.sess&&S.sess.done?home():pause()}}
+
+const MB=()=>WD.mb=WD.mb||{},DONE=e=>(MB()[e.key]||{}).c>=2,TENSE=['一般现在时','一般过去时','现在进行时','现在完成时','be动词'];
+function mItems(){const g={},add=o=>{const k=String(o.q).slice(0,90),e=g[k]||(g[k]={...o,n:0,key:k});e.n++;e.my=o.my;if(o.why)e.why=o.why;e.t=Math.max(e.t||0,o.t||0)};
+S.sess.asked.forEach(a=>{if(a.ok||a.p=='w')return;const x=B[a.p][+String(a.i).slice(1)];add({src:'测评·'+NM[a.p],tag:x[5],q:x[2],my:a.idk?'（不知道）':(a.a==null?'':String(a.a)),ans:Array.isArray(x[4])?'（参考关键词：'+x[4].map(k=>k[0]).join('、')+'）':x[4],why:'',t:0,idk:a.idk})});
+(WD.mis||[]).forEach(m=>{const l=GR.find(z=>z.id==m.l),rd=String(m.l).startsWith('阅读');add({src:l?'语法课':rd?'阅读':'翻译',tag:l?l.t:rd?m.l:'翻译',q:m.q,my:m.my,ans:m.ans,why:m.why,t:m.t})});return Object.values(g)}
+function cause(e,all){const cnt={},okc={};all.forEach(x=>cnt[x.tag]=(cnt[x.tag]||0)+x.n);S.sess.asked.forEach(a=>{if(a.ok&&a.p!='w'){const t=B[a.p][+String(a.i).slice(1)][5];okc[t]=(okc[t]||0)+1}});GR.forEach(l=>{if((WD.g||{})[l.id]&&WD.g[l.id].done)okc[l.t]=(okc[l.t]||0)+1});
+if(e.idk)return['不会或还没学过','你选了“不知道”。'];
+const lk=new Set((S.profile.lookups||[]).map(x=>x.w)),hit=((e.q.match(/[A-Za-z']+/g))||[]).map(w=>w.toLowerCase()).filter(w=>lk.has(w)||(WD.m[w]&&WD.m[w].wr>=2));
+if(hit.length)return['可能是词汇不足',`题目里的 ${hit.slice(0,3).join('、')} 你查过或反复答错。`];
+const tn=all.filter(x=>TENSE.includes(x.tag)).reduce((a,x)=>a+x.n,0);if(TENSE.includes(e.tag)&&tn>=2)return['可能是语法混淆（时态、be 动词容易混）',`时态相关的题一共错了 ${tn} 次。`];
+if(cnt[e.tag]>=2||e.n>=2)return['这个知识点还没掌握',`“${e.tag}”这类题一共错了 ${Math.max(cnt[e.tag],e.n)} 次。`];
+if(okc[e.tag]>0)return['可能是粗心',`同类题你做对过，这类题只错了 1 次。`];
+return['暂时判断不了','只错了 1 次，样本太少，多练几次再看。']}
+function rItem(e){let x;
+for(const p of P){const b=B[p].find(y=>y[2]==e.q);if(b&&b[3]&&!Array.isArray(b[4])){const a=b[3].indexOf(b[4]);if(a>=0)return[b[2],b[3],a,b[3].map((o,i)=>i==a?'这是正确答案。':'这一项不对。')]}}
+for(const l of GR){x=l.ex.find(y=>y[0]==e.q);if(x)return x}for(const r of RD){x=r.q.find(y=>y[0]==e.q);if(x)return x}return null}
+const mbDue=()=>mItems().filter(e=>!DONE(e)&&((MB()[e.key]||{}).due||0)<=Date.now()&&rItem(e));
+function mark(e,sc){const st=MB()[e.key]||{c:0};if(sc){st.c++;st.due=Date.now()+[1,3,7,15][Math.min(st.c-1,3)]*DAY}else{st.c=0;st.due=Date.now()+DAY}MB()[e.key]=st;sv()}
+function mrun(L,i){if(i>=L.length)return mbHome({});const e=L[i];qrun([rItem(e)],0,0,e.tag,sc=>{mark(e,sc);mrun(L,i+1)},`错题复习 ${i+1} / ${L.length}`)}
+function mbHome(f){const all=mItems(),now=Date.now(),open=all.filter(e=>!DONE(e));let L=open.filter(e=>(!f.tag||e.tag==f.tag)&&(!f.src||e.src==f.src));if(f.done)L=all.filter(e=>DONE(e));
+const tc={};open.forEach(e=>tc[e.tag]=(tc[e.tag]||0)+1);const tags=Object.entries(tc).sort((a,b)=>b[1]-a[1]).slice(0,8),due=mbDue(),wr=Object.keys(WD.m).filter(w=>WD.m[w].wr>=2).sort((a,b)=>WD.m[b].wr-WD.m[a].wr).slice(0,12);
+L.sort((a,b)=>b.n-a.n);
+app.innerHTML=`<div class="nv"><button class="g2" id="bk">‹ 返回</button></div><h1>错题本</h1><p class="m">未掌握 ${open.length} 题，已掌握 ${all.length-open.length} 题。连续 2 次复习答对才算掌握。</p>${due.length?`<button class="p" id="rv">复习到期的错题（${due.length}）</button>`:'<p class="m">现在没有需要复习的错题。</p>'}
+<div style="margin:8px 0"><button class="t" data-t="">全部</button>${tags.map(t=>`<button class="t" data-t="${esc(t[0])}">${esc(t[0])} ${t[1]}</button>`).join('')}<button class="t" data-d="1">已掌握</button></div>`+
+(wr.length?`<div class="c"><b>反复答错的单词</b><p>${wr.map(w=>`<span class="t">${esc(w)} ×${WD.m[w].wr}</span>`).join('')}</p><p class="m">这些词会在单词复习里更频繁地出现。</p></div>`:'')+
+L.slice(0,30).map((e,k)=>{const c=cause(e,all),st=MB()[e.key],nx=DONE(e)?'已掌握':!st?'今天可以复习':st.due<=now?'今天可以复习':Math.ceil((st.due-now)/DAY)+' 天后';
+return`<div class="c"><span class="t">${esc(e.src)}</span><span class="t">${esc(e.tag)}</span><span class="t">错 ${e.n} 次</span><p><b>${esc(e.q)}</b></p><p class="m">我的答案</p><p>${esc(e.my||'（空）')}</p><p class="m">正确答案</p><p>${esc(e.ans||'')}</p>${e.why?`<p class="m">错误原因</p><p>${esc(e.why)}</p>`:''}<p class="m">可能的原因：<b>${esc(c[0])}</b><br>依据：${esc(c[1])}</p><p class="m">下次复习：${nx}</p>${e.src=='翻译'?'<span class="m">翻译题请去“翻译训练”重做</span>':rItem(e)?`<button class="g2" data-r="${k}">重做这题</button>`:''}</div>`}).join('')+(L.length>30?'<p class="m">只显示前 30 题，按错的次数排序。</p>':'')+(L.length?'':'<p class="m">这里还空着，做错的题会自动记在这里。</p>');
+$('#bk').onclick=home;if($('#rv'))$('#rv').onclick=()=>mrun(due,0);document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>mbHome({tag:b.dataset.t}));document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>mbHome({done:1}));
+document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const e=L[+b.dataset.r];mrun([e],0)})}
 (async()=>{try{db=await open()}catch(e){app.innerHTML='<h1>无法使用本地存储</h1><p>你的浏览器禁用了存储功能，进度无法保存。请换用 Chrome 并关闭无痕模式。</p>';return}
 S.profile=await get('profile')||null;S.sess=await get('sess')||null;WD=await get('words')||{};WD.m=WD.m||{};WD.fav=WD.fav||[];WD.day=WD.day||{d:'',n:0};
 if(!S.profile||!S.sess)return welcome();if(S.sess.done&&S.sess.part<P.length-1){S.sess.done=false;S.sess.part++;S.sess.level=2;S.sess.streak=0;await save();return notice()}if(S.sess.done)return home();quiz()})();
